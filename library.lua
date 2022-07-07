@@ -1,556 +1,1134 @@
-_G["Theme"] = {
-    ["Window_Border"] = Color3.fromRGB(166, 94, 0),
-    ["Close_Button"] = Color3.fromRGB(175, 100, 20),
+-- MADE BY Blissful#4992 ON DISCORD / CornCatCornDog ON V3RMILLION
 
-    ["Section_Title"] = Color3.fromRGB(210, 210, 210),
-    ["Section_Background"] = Color3.fromRGB(0, 0, 0),
-
-    ["Item_Name_Color"] = Color3.fromRGB(255, 255, 255),
-
-    ["Button"] = Color3.fromRGB(166, 94, 0),
-
-    ["Toggle"] = Color3.fromRGB(166, 94, 0),
-
-    ["Color_Picker"] = Color3.fromRGB(166, 94, 0),
-    ["Color_Picker_Selector_Frame"] = Color3.fromRGB(166, 94, 0),
-
-    ["Slider_Bar"] = Color3.fromRGB(166, 94, 0),
-    ["Slider_Bob"] = Color3.fromRGB(255, 255, 255),
-    ["Slider_Value"] = Color3.fromRGB(160, 0, 255),
-
-    ["Keybind_Border"] = Color3.fromRGB(166, 94, 0),
-
-    ["Dropdown_Border"] = Color3.fromRGB(166, 94, 0),
-    ["Dropdown_Arrow"] = Color3.fromRGB(255, 255, 255),
-    ["Dropdown_Main_Option"] = Color3.fromRGB(255, 213, 153),
-    ["Dropdown_Options"] = Color3.fromRGB(255, 255, 255),
-}
-
---LUA FUNCTIONS
+-- LUA FUNCTIONS
 local clamp = math.clamp
 local round = math.round
 local abs = math.abs
 local random = math.random
 local floor = math.floor
+local ceil = math.ceil
 
 local u2 = UDim2.new
+local v2 = Vector2.new
 local new = Instance.new
 local RGB = Color3.fromRGB
 local HSV = Color3.fromHSV
 local tween = TweenInfo.new
-local stringsub = string.sub
+local sub = string.sub
+local inst = table.insert
 
-local chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%'
-local length = 15
+local TS = game:GetService("TweenService")
+local RS = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 
-math.randomseed(os.time())
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
 
-local charTable = {}
-for c in chars:gmatch "." do
-    table.insert(charTable, c)
-end
+local ColorModule = loadstring(game:HttpGet("https://gist.githubusercontent.com/ao-0/2b1d817a289af992d5fc97b93f180ee8/raw/9b6fd5ccfc4ff6308f8b918d209a4dae27025843/gistfile1.txt"))()
 
-local function newstring()
-    local a = ''
-    for i = 1, length do
-        a = a .. charTable[random(1, #charTable)]
+local function MouseIn(obj)
+    if (Mouse.X < obj.AbsolutePosition.X or Mouse.X > obj.AbsolutePosition.X + obj.AbsoluteSize.X) or (Mouse.Y < obj.AbsolutePosition.Y or Mouse.Y > obj.AbsolutePosition.Y + obj.AbsoluteSize.Y) then
+        return false
     end
-    return a
+    return true
 end
 
 local Library = {}
 
-function Library:NewWindow()
+Library.NewWindow = function(project_name, ui_info)
     local DESTROY_GUI = false
 
-    local project_name = newstring()
-    local Player = game:GetService("Players").LocalPlayer
-    local Mouse = Player:GetMouse()
-    local TS = game:service("TweenService")
-    local UIS = game:service("UserInputService")
-    local ColorModule = loadstring(game:HttpGet("https://gist.githubusercontent.com/ao-0/2b1d817a289af992d5fc97b93f180ee8/raw/9b6fd5ccfc4ff6308f8b918d209a4dae27025843/gistfile1.txt"))()
+    local window_size = ui_info.window_size or v2(500, 340)
+    local window_size_func = ui_info.window_size_func or function()end
+    local scalable = ui_info.scalable or true
+    local exit_func = ui_info.exit_func or function()end
 
-    local UI = new("ScreenGui")
-    syn.protect_gui(UI)
-    
-    local MainWindow = new("Frame")
-    local TopBar = new("Frame")
-    local ProjectTitle = new("TextLabel")
-    local CloseButton = new("ImageButton")
-    local MinimizeButton = new("ImageButton")
-
-    local Click = new('Sound')
-    Click.Parent = game.CoreGui
-    Click.Name = "click"
-    Click.SoundId = "rbxassetid://1238528678"
-    Click.Volume = 2
-
-    local Categories = new("Frame")
-
-    local PageBar = new("Frame")
-    local PageListLayout = new("UIListLayout")
+    local RCX = new("ScreenGui")
+    local Main_Window = new("Frame")
+    local Pages = new("Frame")
+    local Top_Bar = new("Frame")
+    local Top_Bar_Border = new("Frame")
+    local Top_Bar_Title = new("TextLabel")
+    local Close_Button = new("TextButton")
+    local Minimize_Button = new("TextButton")
     local Credits = new("TextLabel")
 
-    UI.Name = project_name
-    UI.Parent = game.CoreGui
-    UI.ZIndexBehavior = Enum.ZIndexBehavior.Global
-    UI.ResetOnSpawn = false
+    RCX.Name = project_name
+    RCX.Parent = game.CoreGui
+    RCX.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    RCX.ResetOnSpawn = false
 
-    MainWindow.Name = "MainWindow"
-    MainWindow.Parent = UI
-    MainWindow.BackgroundColor3 = RGB(20, 20, 20)
-    MainWindow.BackgroundTransparency = 0.1
-    MainWindow.BorderColor3 = _G["Theme"]["Window_Border"]
-    MainWindow.ClipsDescendants = false
-    MainWindow.Position = u2(0.17239584, 0, 0.152777776, 0)
-    MainWindow.Size = u2(0, 800, 0, 500)
-    MainWindow.Active = true
-    MainWindow.Draggable = true
-
-    local toggled_ui = false
-    local previous = MainWindow.AbsolutePosition
-
-    local function TOGGLE_UI()
-        toggled_ui = not toggled_ui
-        if toggled_ui then
-            previous = MainWindow.AbsolutePosition
-            TS:Create(MainWindow, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = u2(0, previous.X, 0, workspace.CurrentCamera.ViewportSize.Y + 10)}):Play()
-        else
-            TS:Create(MainWindow, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = u2(0, previous.X, 0, previous.Y)}):Play()
-        end
-    end
-
-    TopBar.Name = "TopBar"
-    TopBar.Parent = MainWindow
-    TopBar.BackgroundColor3 = RGB(30, 30, 30)
-    TopBar.BorderColor3 = RGB(255, 255, 255)
-    TopBar.BorderSizePixel = 0
-    TopBar.ZIndex = 3
-    TopBar.Size = u2(1, 0, 0, 40)
-
-    ProjectTitle.Name = "ProjectTitle"
-    ProjectTitle.Parent = TopBar
-    ProjectTitle.BackgroundColor3 = RGB(255, 255, 255)
-    ProjectTitle.BackgroundTransparency = 1.000
-    ProjectTitle.Position = u2(0, 10, 0, 0)
-    ProjectTitle.Size = u2(0.5, 0, 1, 0)
-    ProjectTitle.Font = Enum.Font.Gotham
-    ProjectTitle.RichText = true
-    ProjectTitle.ZIndex = 4
-    ProjectTitle.Text = _G["UI_Info"]["Project_Title"]
-    ProjectTitle.TextColor3 = RGB(255, 255, 255)
-    ProjectTitle.TextSize = 25.000
-    ProjectTitle.TextWrapped = true
-    ProjectTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-    CloseButton.Name = "CloseButton"
-    CloseButton.Parent = TopBar
-    CloseButton.BackgroundColor3 = RGB(255, 255, 255)
-    CloseButton.BackgroundTransparency = 1.000
-    CloseButton.Position = u2(1, -33, 0.5, -11)
-    CloseButton.Size = u2(0, 22, 0, 22)
-    CloseButton.AutoButtonColor = false
-    CloseButton.ZIndex = 4
-    CloseButton.Image = "rbxassetid://6814382218"
-    CloseButton.ImageColor3 = _G["Theme"]["Close_Button"]
-
-    CloseButton.MouseEnter:Connect(function()
-        TS:Create(CloseButton, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {ImageTransparency = 0.15}):Play()
-    end)
-
-    CloseButton.MouseLeave:Connect(function()
-        TS:Create(CloseButton, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
-    end)
-
-    CloseButton.MouseButton1Click:Connect(function()
-        TOGGLE_UI()
-    end)
-
-    PageBar.Name = "PageBar"
-    PageBar.Parent = MainWindow
-    PageBar.BackgroundColor3 = RGB(27, 27, 27)
-    PageBar.BorderColor3 = RGB(255, 255, 255)
-    PageBar.BorderSizePixel = 0
-    PageBar.Position = u2(0, 0, 0, 40)
-    PageBar.Size = u2(0, 150, 1, -40)
-
-    PageListLayout.Parent = PageBar
-    PageListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    PageListLayout.Padding = UDim.new(0, 0)
+    Main_Window.Name = "Main_Window"
+    Main_Window.Parent = RCX
+    Main_Window.BackgroundColor3 = RGB(25, 26, 36)
+    Main_Window.BorderColor3 = RGB(255, 255, 255)
+    Main_Window.BorderSizePixel = 0
+    Main_Window.ClipsDescendants = true
+    Main_Window.Position = u2(0, 550, 0, 200)
+    Main_Window.Size = u2(0, window_size.X, 0, window_size.Y)
+    Main_Window.Active = true
 
     Credits.Name = "Credits"
-    Credits.Parent = MainWindow
-    Credits.BackgroundColor3 = RGB(255, 255, 255)
-    Credits.BackgroundTransparency = 1.000
-    Credits.Position = u2(0, 5, 0, 472.5)
-    Credits.Size = u2(0, 10, 0, 30)
-    Credits.Font = Enum.Font.Code
-    Credits.Text = "By Blissful#4992"
-    Credits.TextColor3 = RGB(255, 255, 255)
-    Credits.TextSize = 11.000
+    Credits.Parent = Main_Window
+    Credits.BackgroundTransparency = 1
+    Credits.Active = false
+    Credits.Size = u2(0, 1, 0, 10)
+    Credits.Font = Enum.Font.SourceSans
+    Credits.Text = "Made by Blissful#4992"
+    Credits.TextColor3 = RGB(207, 207, 222)
+    Credits.TextSize = 12
     Credits.TextXAlignment = Enum.TextXAlignment.Left
+    Credits.ZIndex = 2
+    Credits.Position = u2(0.5, -Credits.TextBounds.X/2, 1, -15)
 
-    Categories.Name = "Categories"
-    Categories.Parent = MainWindow
-    Categories.BackgroundColor3 = RGB(35, 35, 35)
-    Categories.BorderColor3 = RGB(255, 255, 255)
-    Categories.BorderSizePixel = 0
-    Categories.Position = u2(0, 150, 0, 40)
-    Categories.Size = u2(1, -150, 1, -40)
+    Pages.Name = "Pages"
+    Pages.Parent = Main_Window
+    Pages.BackgroundColor3 = RGB(30, 32, 44)
+    Pages.BorderColor3 = RGB(26, 28, 40)
+    Pages.BorderSizePixel = 5
+    Pages.ClipsDescendants = true
+    Pages.Position = u2(0, 10, 0, 50)
+    Pages.Size = u2(1, -20, 1, -70)
+    Pages.ZIndex = 2
+
+    Top_Bar.Name = "Top_Bar"
+    Top_Bar.Parent = Main_Window
+    Top_Bar.BackgroundColor3 = RGB(25, 26, 36)
+    Top_Bar.BorderColor3 = RGB(255, 255, 255)
+    Top_Bar.BorderSizePixel = 0
+    Top_Bar.Size = u2(1, 0, 0, 30)
+    Top_Bar.ZIndex = 10000
+
+    Top_Bar_Border.Name = "Top_Bar_Border"
+    Top_Bar_Border.Parent = Top_Bar
+    Top_Bar_Border.BackgroundColor3 = RGB(58, 58, 85)
+    Top_Bar_Border.BorderColor3 = RGB(255, 255, 255)
+    Top_Bar_Border.BorderSizePixel = 0
+    Top_Bar_Border.Position = u2(0, 0, 1, 0)
+    Top_Bar_Border.Size = u2(1, 0, 0, 1)
+    Top_Bar_Border.ZIndex = 10001
+
+    Top_Bar_Title.Name = "Top_Bar_Title"
+    Top_Bar_Title.Parent = Top_Bar
+    Top_Bar_Title.BackgroundColor3 = RGB(255, 255, 255)
+    Top_Bar_Title.BackgroundTransparency = 1.000
+    Top_Bar_Title.BorderSizePixel = 0
+    Top_Bar_Title.Position = u2(0, 10, 0, 0)
+    Top_Bar_Title.Size = u2(0, 1, 1, 0)
+    Top_Bar_Title.ZIndex = 10001
+    Top_Bar_Title.Font = Enum.Font.SourceSans
+    Top_Bar_Title.Text = project_name
+    Top_Bar_Title.TextColor3 = RGB(207, 207, 222)
+    Top_Bar_Title.TextSize = 15.000
+    Top_Bar_Title.TextXAlignment = Enum.TextXAlignment.Left
+
+    Close_Button.Name = "Close_Button"
+    Close_Button.Parent = Top_Bar
+    Close_Button.BackgroundColor3 = RGB(255, 255, 255)
+    Close_Button.BackgroundTransparency = 1.000
+    Close_Button.BorderSizePixel = 0
+    Close_Button.Position = u2(1, -20, 0, 10)
+    Close_Button.Size = u2(0, 10, 0, 10)
+    Close_Button.ZIndex = 10001
+    Close_Button.Font = Enum.Font.Arial
+    Close_Button.Text = "X"
+    Close_Button.TextColor3 = RGB(207, 207, 222)
+    Close_Button.TextSize = 12.000
+
+    Minimize_Button.Name = "Minimize_Button"
+    Minimize_Button.Parent = Top_Bar
+    Minimize_Button.BackgroundColor3 = RGB(255, 255, 255)
+    Minimize_Button.BackgroundTransparency = 1.000
+    Minimize_Button.BorderSizePixel = 0
+    Minimize_Button.Position = u2(1, -35, 0, 10)
+    Minimize_Button.Size = u2(0, 10, 0, 10)
+    Minimize_Button.ZIndex = 10001
+    Minimize_Button.Font = Enum.Font.Code
+    Minimize_Button.Text = "-"
+    Minimize_Button.TextColor3 = RGB(207, 207, 222)
+    Minimize_Button.TextSize = 17.000
 
     local structurer = {}
 
-    function structurer:Toggle()
-        TOGGLE_UI()
-    end
+    -- TOGGLE UI
+    local UI_Toggled = false
 
-    function structurer:UpdateTheme()
-        ProjectTitle.Text = _G["UI_Info"]["Project_Title"]
-        MainWindow.BorderColor3 = _G["Theme"]["Window_Border"]
-        CloseButton.ImageColor3 = _G["Theme"]["Close_Button"]
-
-        local t = UI:GetDescendants()
-        for i = 1, #t do
-            local v = t[i]
-            if v.Name == "Section" then
-                v.BackgroundColor3 = _G["Theme"]["Section_Background"]
-                v.SectionTitle.TextColor3 = _G["Theme"]["Section_Title"]
-            elseif v.Name == "Button" then
-                v.Detector.BorderColor3 = _G["Theme"]["Button"]
-                v.Detector.TextColor3 = _G["Theme"]["Item_Name_Color"]
-            elseif v.Name == "Toggle" then
-                v.ToggleName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                v.Detector.BorderColor3 = _G["Theme"]["Toggle"]
-            elseif v.Name == "ColorPicker" then
-                v.PickerName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                v.Detector.BorderColor3 = _G["Theme"]["Color_Picker"]
-                v.PickerFrame.BorderColor3 = _G["Theme"]["Color_Picker_Selector_Frame"]
-            elseif v.Name == "Slider" then
-                v.SliderName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                v.Value.TextColor3 = _G["Theme"]["Slider_Value"]
-                v.Detector.Bar.BackgroundColor3 = _G["Theme"]["Slider_Bar"]
-                v.Detector.Bob.BackgroundColor3 = _G["Theme"]["Slider_Bob"]
-            elseif v.Name == "Keybind" then
-                v.Detector.BorderColor3 = _G["Theme"]["Keybind_Border"]
-                v.KeybindName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-            elseif v.Name == "Dropdown" then
-                v.DropdownName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                v.Detector.BorderColor3 = _G["Theme"]["Dropdown_Border"]
-                v.Detector.TextColor3 = _G["Theme"]["Dropdown_Main_Option"]
-                v.Detector.Arrow.ImageColor3 = _G["Theme"]["Dropdown_Arrow"]
-            elseif v.Name == "Option" then
-                v.TextColor3 = _G["Theme"]["Dropdown_Options"]
-            end
+    local UI_Previous_Y = 340
+    local function TOGGLE_UI()
+        UI_Toggled = not UI_Toggled
+        if UI_Toggled then
+            Minimize_Button.Text = "+"
+            UI_Previous_Y = Main_Window.AbsoluteSize.Y
+            TS:Create(Main_Window, tween(0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = u2(0, Main_Window.AbsoluteSize.X, 0, 30)}):Play()
+        else 
+            Minimize_Button.Text = "-"
+            TS:Create(Main_Window, tween(0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = u2(0, Main_Window.AbsoluteSize.X, 0, UI_Previous_Y)}):Play()
         end
     end
 
-    function structurer:Kill()
-        DESTROY_GUI = true
-        UI:Destroy()
-        game.CoreGui:FindFirstChild(project_name):Destroy()
+    Minimize_Button.MouseButton1Click:Connect(function()
+        TOGGLE_UI()
+    end)
+
+    structurer.Toggle = function()
+        TOGGLE_UI()
     end
 
-    function structurer:NewPage(tbl, page_name)
-        local CurrentPageNumber = #tbl + 1
-        local page_info = {["name"] = page_name, ["idx"] = CurrentPageNumber}
-        table.insert(tbl, page_info) 
+    -- CLOSE UI
+    local function CLOSE_UI()
+        RCX:Destroy()
+        DESTROY_GUI = true
+        exit_func()
+    end
 
-        local Page = new("TextButton")
-        local PageName = new("TextLabel")
+    Close_Button.MouseButton1Click:Connect(function()
+        CLOSE_UI()
+    end)
 
-        Page.Name = CurrentPageNumber
-        Page.Parent = PageBar
-        Page.BackgroundColor3 = RGB(10, 10, 10)
-        Page.BackgroundTransparency = 0.85
-        Page.BorderSizePixel = 0
-        Page.Size = u2(1, 0, 0, 35)
-        Page.AutoButtonColor = false
-        Page.Font = Enum.Font.SourceSans
-        Page.Text = ""
-        Page.TextColor3 = RGB(0, 0, 0)
-        Page.TextSize = 14.000
+    structurer.Close = function()
+        CLOSE_UI()
+    end
 
-        PageName.Name = "PageName"
-        PageName.Parent = Page
-        PageName.BackgroundColor3 = RGB(255, 255, 255)
-        PageName.BackgroundTransparency = 1.000
-        PageName.BorderColor3 = RGB(255, 255, 255)
-        PageName.Position = u2(0, 10, 0, 0)
-        PageName.Size = u2(1, -10, 0, 35)
-        PageName.Font = Enum.Font.SourceSans
-        PageName.Text = page_name
-        PageName.TextColor3 = RGB(255, 255, 255)
-        PageName.TextSize = 16.000
-        PageName.TextXAlignment = Enum.TextXAlignment.Left
+    -- HIDE UI
+    local UI_Hid = false
+    structurer.Hide = function()
+        UI_Hid = not UI_Hid
+        RCX.Enabled = not UI_Hid
+    end
 
-        local Page_Category = new("Frame")
+    -- PAGE SELECTOR 
+    local Page_Holder = new("ScrollingFrame")
+    local Page_List_Layout = new("UIListLayout")
 
-        local Column1 = new("Frame")
-        local ColumnLayout1 = new("UIListLayout")
-        local Column2 = new("Frame")
-        local ColumnLayout2 = new("UIListLayout")
-        local Column3 = new("Frame")
-        local ColumnLayout3 = new("UIListLayout")
+    Page_Holder.Name = "Page_Holder"
+    Page_Holder.Parent = Top_Bar
+    Page_Holder.Active = true
+    Page_Holder.AutomaticCanvasSize = Enum.AutomaticSize.X
+    Page_Holder.BackgroundTransparency = 1
+    Page_Holder.BackgroundColor3 = RGB(25, 26, 36)
+    Page_Holder.BorderSizePixel = 0
 
-        Page_Category.Name = CurrentPageNumber
-        Page_Category.Parent = Categories
-        Page_Category.BackgroundColor3 = RGB(255, 255, 255)
-        Page_Category.BackgroundTransparency = 1.000
-        Page_Category.BorderColor3 = RGB(255, 255, 255)
-        Page_Category.BorderSizePixel = 0
-        Page_Category.Visible = false
-        Page_Category.Size = u2(1, 0, 1, 0)
-        Page_Category.ClipsDescendants = false
+    Page_Holder.Size = u2(1, 0, 1, 0)
+    Page_Holder.Position = u2(0, 0, 0, 0)
 
-        Column1.Name = "Column1"
-        Column1.Parent = Page_Category
-        Column1.BackgroundColor3 = RGB(255, 255, 255)
-        Column1.BackgroundTransparency = 1.000
-        Column1.Size = u2(0.33, 0, 1, 0)
+    Page_Holder.ScrollingDirection = Enum.ScrollingDirection.X
+    Page_Holder.ZIndex = 10001
+    Page_Holder.CanvasSize = u2(0, 0, 1, 0)
+    Page_Holder.ScrollBarImageColor3 = RGB(207, 207, 222)
+    Page_Holder.ScrollBarThickness = 1
 
-        ColumnLayout1.Parent = Column1
-        ColumnLayout1.SortOrder = Enum.SortOrder.LayoutOrder
+    Page_List_Layout.Name = "Page_List_Layout"
+    Page_List_Layout.Parent = Page_Holder
+    Page_List_Layout.FillDirection = Enum.FillDirection.Horizontal
+    Page_List_Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    Page_List_Layout.Padding = UDim.new(0, 10)
+    Page_List_Layout.SortOrder = Enum.SortOrder.LayoutOrder
 
-        Column2.Name = "Column2"
-        Column2.Parent = Page_Category
-        Column2.BackgroundColor3 = RGB(255, 255, 255)
-        Column2.BackgroundTransparency = 1.000
-        Column2.Position = u2(0.33, 1, 0, 0)
-        Column2.Size = u2(0.33, 0, 1, 0)
+    -- WINDOW DRAGGING
+    local Dragging_UI
+    local Previous_Offset
 
-        ColumnLayout2.Parent = Column2
-        ColumnLayout2.SortOrder = Enum.SortOrder.LayoutOrder
+    local drag_connection
+    drag_connection = UIS.InputChanged:Connect(function(input)
+        if DESTROY_GUI then
+            drag_connection:Disconnect()
+        elseif Dragging_UI and input.UserInputType == Enum.UserInputType.MouseMovement then
+            TS:Create(Main_Window, tween(0.04, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = u2(0, Mouse.X + Previous_Offset.X, 0, Mouse.Y + Previous_Offset.Y)}):Play()
+        end
+    end)
 
-        Column3.Name = "Column3"
-        Column3.Parent = Page_Category
-        Column3.BackgroundColor3 = RGB(255, 255, 255)
-        Column3.BackgroundTransparency = 1.000
-        Column3.Position = u2(0.666999996, 1, 0, 0)
-        Column3.Size = u2(0.33, 0, 1, 0)
+    local drag_input_connection_on
+    drag_input_connection_on = UIS.InputBegan:Connect(function(input)
+        if DESTROY_GUI then
+            drag_input_connection_on:Disconnect()
+        elseif input.UserInputType == Enum.UserInputType.MouseButton1 and MouseIn(Top_Bar) then
+            Previous_Offset = v2(Main_Window.AbsolutePosition.X, Main_Window.AbsolutePosition.Y) - v2(Mouse.X, Mouse.Y)
+            Dragging_UI = true
+        end
+    end)
 
-        ColumnLayout3.Parent = Column3
-        ColumnLayout3.SortOrder = Enum.SortOrder.LayoutOrder
+    local drag_input_connection_off
+    drag_input_connection_off = UIS.InputEnded:Connect(function(input)
+        if DESTROY_GUI then
+            drag_input_connection_off:Disconnect()
+        elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+            Dragging_UI = false
+        end
+    end)
 
-        Page.MouseButton1Click:Connect(function()
-            local t = PageBar:GetChildren()
-            for i = 1, #t do
-                local v = t[i]
-                if v:IsA("TextButton") then
-                    if tonumber(v.Name) ~= CurrentPageNumber then
-                        v.BackgroundColor3 = RGB(12, 12, 12)
-                    else 
-                        v.BackgroundColor3 = RGB(0, 0, 0)
+    -- WINDOW SCALING
+    local limit = Top_Bar_Title.TextBounds.X+228
+    if scalable then
+        local ScalingSideX = new("TextButton")
+        local ScalingSideY = new("TextButton")
+
+        ScalingSideY.Name = "ScalingSideY"
+        ScalingSideY.Parent = Main_Window
+        ScalingSideY.BackgroundColor3 = RGB(58, 58, 85)
+        ScalingSideY.BackgroundTransparency = 1
+        ScalingSideY.BorderSizePixel = 0
+        ScalingSideY.Position = u2(0, 0, 1, -5)
+        ScalingSideY.Size = u2(1, 0, 0, 10)
+        ScalingSideY.AutoButtonColor = false
+        ScalingSideY.Font = Enum.Font.SourceSans
+        ScalingSideY.TextColor3 = RGB(0, 0, 0)
+        ScalingSideY.Text = ""
+        ScalingSideY.TextSize = 14.000
+
+        ScalingSideX.Name = "ScalingSideX"
+        ScalingSideX.Parent = Main_Window
+        ScalingSideX.BackgroundColor3 = RGB(58, 58, 85)
+        ScalingSideX.BackgroundTransparency = 1
+        ScalingSideX.BorderSizePixel = 0
+        ScalingSideX.Position = u2(1, -5, 0, 31)
+        ScalingSideX.Size = u2(0, 10, 1, -31)
+        ScalingSideX.Font = Enum.Font.SourceSans
+        ScalingSideX.AutoButtonColor = false
+        ScalingSideX.Text = ""
+        ScalingSideX.TextColor3 = RGB(0, 0, 0)
+        ScalingSideX.TextSize = 14.000
+
+        local Mouse_Scaling_X = false
+        local Mouse_Scaling_Y = false
+
+        ScalingSideX.MouseButton1Down:Connect(function()
+            Mouse_Scaling_X = true
+            ScalingSideX.BackgroundTransparency = 0
+            ScalingSideY.BackgroundTransparency = 1
+        end)
+
+        ScalingSideY.MouseButton1Down:Connect(function()
+            Mouse_Scaling_Y = true
+            ScalingSideY.BackgroundTransparency = 0
+            ScalingSideX.BackgroundTransparency = 1
+        end)
+
+        local Mouse_Connection
+        Mouse_Connection = UIS.InputEnded:Connect(function(input)
+            if DESTROY_GUI then
+                Mouse_Connection:Disconnect()
+            elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+                Mouse_Scaling_X = false
+                Mouse_Scaling_Y = false
+                ScalingSideY.BackgroundTransparency = 1
+                ScalingSideX.BackgroundTransparency = 1
+            end
+        end)
+
+        local Scaling_Connection
+        Scaling_Connection = function()
+            if DESTROY_GUI then
+                Scaling_Connection:Disconnect()
+            elseif UI_Toggled == false and Mouse_Scaling_Y then
+                local offset_mouse = Mouse.Y - Main_Window.AbsolutePosition.Y
+
+                TS:Create(Main_Window, tween(0.05, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = u2(0, Main_Window.AbsoluteSize.X, 0, clamp(offset_mouse, 100, math.huge))}):Play()
+                -- Main_Window.Size = u2(0, Main_Window.AbsoluteSize.X, 0, clamp(offset_mouse, 100, math.huge))
+                window_size_func(v2(Main_Window.AbsoluteSize.X, Main_Window.AbsoluteSize.Y))
+            elseif UI_Toggled == false and Mouse_Scaling_X then
+                local offset_mouse = Mouse.X - Main_Window.AbsolutePosition.X
+
+                TS:Create(Main_Window, tween(0.05, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = u2(0, clamp(offset_mouse, limit, math.huge), 0, Main_Window.AbsoluteSize.Y)}):Play()
+                -- Main_Window.Size = u2(0, clamp(offset_mouse, limit, math.huge), 0, Main_Window.AbsoluteSize.Y)
+                window_size_func(v2(Main_Window.AbsoluteSize.X, Main_Window.AbsoluteSize.Y))
+            else
+                if UI_Toggled then
+                    ScalingSideY.Visible = false
+                    ScalingSideX.Visible = false
+
+                    coroutine.wrap(function()
+                        repeat wait() until not UI_Toggled and not UI_Hid
+                        RS:BindToRenderStep("CScaling", 1, Scaling_Connection)
+                    end)()
+                    RS:UnbindFromRenderStep("CScaling")
+                else
+                    ScalingSideY.Visible = true
+                    ScalingSideX.Visible = true
+                end
+            end
+        end
+        RS:BindToRenderStep("CScaling", 1, Scaling_Connection)
+    end
+
+    local Notifications = new("Frame")
+    local Notifications_List = new("UIListLayout")
+
+    Notifications.Name = "Notifications"
+    Notifications.Parent = RCX
+    Notifications.BackgroundColor3 = RGB(255, 255, 255)
+    Notifications.BackgroundTransparency = 1.000
+    Notifications.Position = u2(1, -280, 0, -40)
+    Notifications.Size = u2(0, 260, 1, 0)
+
+    Notifications_List.Name = "Notifications_List"
+    Notifications_List.Parent = Notifications
+    Notifications_List.SortOrder = Enum.SortOrder.LayoutOrder
+    Notifications_List.Padding = UDim.new(0, 10)
+    Notifications_List.VerticalAlignment = Enum.VerticalAlignment.Bottom
+
+    structurer.Notification = function(notification_name, CallBack, info, Refuse_CallBack)
+        if CallBack ~= nil and info ~= nil then else return end
+
+        local Notification = new("Frame")
+        local Notif_Title = new("TextLabel")
+        local Notif_Bar_Border = new("Frame")
+        local Notif_Body = new("TextLabel")
+        local Check = new("ImageButton")
+
+        Notification.Name = notification_name
+        Notification.Parent = Notifications
+        Notification.BackgroundColor3 = RGB(25, 26, 36)
+        Notification.BorderSizePixel = 0
+        Notification.Size = u2(1, 0, 0, 100)
+        Notification.ZIndex = 100000
+
+        Notif_Title.Name = "Notif_Title"
+        Notif_Title.Parent = Notification
+        Notif_Title.BackgroundColor3 = RGB(255, 255, 255)
+        Notif_Title.BackgroundTransparency = 1.000
+        Notif_Title.Position = u2(0, 5, 0, 3)
+        Notif_Title.Size = u2(0, 1, 0, 20)
+        Notif_Title.ZIndex = 100001
+        Notif_Title.Font = Enum.Font.SourceSans
+        Notif_Title.Text = notification_name
+        Notif_Title.TextColor3 = RGB(255, 255, 255)
+        Notif_Title.TextSize = 16.000
+        Notif_Title.TextXAlignment = Enum.TextXAlignment.Left
+
+        Notif_Bar_Border.Name = "Notif_Bar_Border"
+        Notif_Bar_Border.Parent = Notification
+        Notif_Bar_Border.BackgroundColor3 = RGB(58, 58, 85)
+        Notif_Bar_Border.BorderColor3 = RGB(255, 255, 255)
+        Notif_Bar_Border.BorderSizePixel = 0
+        Notif_Bar_Border.Position = u2(0, 0, 0, 25)
+        Notif_Bar_Border.Size = u2(1, 0, 0, 1)
+        Notif_Bar_Border.ZIndex = 100002
+
+        Notif_Body.Name = "Notif_Body"
+        Notif_Body.Parent = Notification
+        Notif_Body.BackgroundColor3 = RGB(255, 255, 255)
+        Notif_Body.BackgroundTransparency = 1.000
+        Notif_Body.Position = u2(0, 5, 0, 30)
+        Notif_Body.Size = u2(1, -10, 1, -35)
+        Notif_Body.ZIndex = 100001
+        Notif_Body.Font = Enum.Font.SourceSans
+        Notif_Body.Text = info.body or ""
+        Notif_Body.TextColor3 = RGB(238, 238, 255)
+        Notif_Body.TextSize = 14.000
+        Notif_Body.TextWrapped = true
+        Notif_Body.TextXAlignment = Enum.TextXAlignment.Left
+        Notif_Body.TextYAlignment = Enum.TextYAlignment.Top
+
+        Check.Name = "Check"
+        Check.Parent = Notification
+        Check.BackgroundColor3 = RGB(255, 255, 255)
+        Check.BackgroundTransparency = 1.000
+        Check.Position = u2(1, -18, 0, 5)
+        Check.Size = u2(0, 13, 0, 14)
+        Check.ZIndex = 100002
+        Check.AutoButtonColor = false
+        Check.Image = "rbxassetid://6993419180"
+
+        Check.MouseEnter:Connect(function()
+            TS:Create(Check, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {ImageTransparency = 0.15}):Play()
+        end)
+    
+        Check.MouseLeave:Connect(function()
+            TS:Create(Check, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+        end)
+
+        Check.MouseButton1Click:Connect(function()
+            CallBack()
+            Notification:Destroy()
+        end)
+
+        if Refuse_CallBack ~= nil and type(Refuse_CallBack) == "function" then
+            local Refuse = new("ImageButton")
+
+            Refuse.Name = "Refuse"
+            Refuse.Parent = Notification
+            Refuse.BackgroundColor3 = RGB(255, 255, 255)
+            Refuse.BackgroundTransparency = 1.000
+            Refuse.Position = u2(1, -34, 0, 6)
+            Refuse.Size = u2(0, 12, 0, 12)
+            Refuse.ZIndex = 100002
+            Refuse.AutoButtonColor = false
+            Refuse.Image = "rbxassetid://6993384643"
+
+            Refuse.MouseEnter:Connect(function()
+                TS:Create(Check, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {ImageTransparency = 0.15}):Play()
+            end)
+        
+            Refuse.MouseLeave:Connect(function()
+                TS:Create(Check, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+            end)
+    
+            Refuse.MouseButton1Click:Connect(function()
+                Refuse_CallBack()
+                Notification:Destroy()
+            end)
+        end
+    end
+
+    structurer.NewPage = function(page_name)
+        -- SELECTOR APPEARANCE
+        local Page_Option = new("TextButton")
+
+        Page_Option.Name = page_name
+        Page_Option.Parent = Page_Holder
+        Page_Option.BackgroundColor3 = RGB(58, 58, 85)
+        Page_Option.BackgroundTransparency = 1.000
+        Page_Option.Text = page_name
+        Page_Option.ZIndex = 10003
+        Page_Option.AutoButtonColor = false
+        Page_Option.Font = Enum.Font.SourceSans
+        Page_Option.TextColor3 = RGB(200, 200, 214)
+        Page_Option.TextSize = 14.000
+
+        Page_Option.Size = u2(0, Page_Option.TextBounds.X+8, 1, 0)
+
+        -- REAL PAGE
+        local Page_Real = new("ScrollingFrame")
+        local Page_ListLayout = new("UIListLayout")
+
+        Page_Real.Name = page_name
+        Page_Real.Parent = Pages
+        Page_Real.Active = false
+        Page_Real.Visible = false
+        Page_Real.BackgroundColor3 = RGB(255, 255, 255)
+        Page_Real.BackgroundTransparency = 1.000
+        Page_Real.BorderSizePixel = 0
+        Page_Real.Size = u2(1, 0, 1, 0)
+        Page_Real.ZIndex = 3
+        Page_Real.CanvasSize = u2(0, 0, 5, 0)
+        Page_Real.ScrollBarThickness = 2
+        Page_Real.ScrollBarImageColor3 = RGB(207, 207, 222)
+
+        Page_ListLayout.Name = page_name.."_ListLayout"
+        Page_ListLayout.Parent = Page_Real
+        Page_ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+        local function SELECT_PAGE()
+            local t1 = Page_Holder:GetChildren()
+            for i1 = 1, #t1 do
+                local v = t1[i1]
+                if not v:IsA("UIListLayout") then
+                    if v.Name == Page_Option.Name then
+                        v.TextColor3 = RGB(255, 255, 255)
+                        TS:Create(v, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.75}):Play()
+                    else
+                        v.TextColor3 = RGB(200, 200, 214)
+                        TS:Create(v, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
                     end
                 end
             end
-            local t2 = Categories:GetChildren()
+            local t2 = Pages:GetChildren()
             for i2 = 1, #t2 do
                 local v = t2[i2]
-                if tonumber(v.Name) == CurrentPageNumber then
+                if v.Name == Page_Option.Name then
                     v.Visible = true
                 else
                     v.Visible = false
                 end
             end
+        end
+
+        Page_Option.MouseButton1Click:Connect(function()
+            SELECT_PAGE()
         end)
 
-        local pickerzindex = 1000
-        local function NewPickerLayer()
-            pickerzindex = pickerzindex + 1
+        local page_funcs = {}
+
+        page_funcs.Select = function()
+            SELECT_PAGE()
         end
 
-        local dropdownzindex = 10
-        local function NewDropdownLayer()
-            dropdownzindex = dropdownzindex + 1
-        end
+        do
+            local offset = 0
 
-        local section_lib = {}
-        function section_lib:NewSection(name)
-            local Section = new("Frame")
-            local SectionListLayout = new("UIListLayout")
-            local SectionTitle = new("TextLabel")
-
-            Section.Name = "Section"
-            if Column1:FindFirstChildOfClass("Frame") == nil then
-                Section.Parent = Column1
-            elseif Column2:FindFirstChildOfClass("Frame") == nil then
-                Section.Parent = Column2
-            elseif Column3:FindFirstChildOfClass("Frame") == nil then
-                Section.Parent = Column3
-            else
-                Section:Destroy()
+            for i,v in pairs(Page_Holder:GetChildren()) do
+                if v:IsA("TextButton") then
+                    offset = offset + v.AbsoluteSize.X
+                end
             end
-            Section.BackgroundColor3 = _G["Theme"]["Section_Background"]
-            Section.BackgroundTransparency = 0.95
-            Section.BorderSizePixel = 0
-            Section.Size = u2(1, 0, 0, 30)
 
-            SectionListLayout.Parent = Section
-            SectionListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            limit = (Top_Bar_Title.TextBounds.X*1.75) + (offset*1.75)
+        end
 
-            SectionTitle.Name = "SectionTitle"
-            SectionTitle.Parent = Section
-            SectionTitle.BackgroundColor3 = RGB(255, 255, 255)
-            SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Size = u2(1, 0, 0, 30)
-            SectionTitle.Font = Enum.Font.SourceSans
-            SectionTitle.TextColor3 = _G["Theme"]["Section_Title"]
-            SectionTitle.Text = name
-            SectionTitle.TextSize = 14.000
+        page_funcs.NewCategory = function(category_name)
+            local Category = new("Frame")
+            local Category_Background = new("Frame")
+            local Options_Holder = new("Frame")
+            local Options_List_Layout = new("UIListLayout")
+            local Category_Dropdown = new("TextButton")
+            local Category_Dropdown_Arrow = new("ImageLabel")
 
-            local function_library = {}
-            function function_library:NewButton(name, CallBack)
+            Category.Name = category_name
+            Category.Parent = Page_Real
+            Category.BackgroundColor3 = RGB(255, 255, 255)
+            Category.BackgroundTransparency = 1.000
+            Category.Size = u2(1, 0, 0, 30)
+            Category.ZIndex = 4
+
+            Category_Background.Name = "Category_Background"
+            Category_Background.Parent = Category
+            Category_Background.BackgroundColor3 = RGB(34, 36, 50)
+            Category_Background.BorderSizePixel = 0
+            Category_Background.Position = u2(0, 9, 0, 30)
+            Category_Background.Size = u2(1, -18, 0, 0)
+            Category_Background.ZIndex = 3
+
+            Options_Holder.Name = "Options_Holder"
+            Options_Holder.Parent = Category_Background
+            Options_Holder.BackgroundColor3 = RGB(255, 255, 255)
+            Options_Holder.Position = u2(0, 0, 0, 5)
+            Options_Holder.Size = u2(1, 0, 1, -5)
+
+            Options_List_Layout.Name = "Options_List_Layout"
+            Options_List_Layout.Parent = Options_Holder
+            Options_List_Layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+            Category_Dropdown.Name = "Category_Dropdown"
+            Category_Dropdown.Parent = Category
+            Category_Dropdown.BackgroundColor3 = RGB(25, 26, 36)
+            Category_Dropdown.BorderColor3 = RGB(58, 58, 85)
+            Category_Dropdown.Position = u2(0, 10, 0, 10)
+            Category_Dropdown.Size = u2(0, 200, 0, 20)
+            Category_Dropdown.ZIndex = 4
+            Category_Dropdown.AutoButtonColor = false
+            Category_Dropdown.Font = Enum.Font.SourceSans
+            Category_Dropdown.Text = category_name
+            Category_Dropdown.TextColor3 = RGB(207, 207, 222)
+            Category_Dropdown.TextSize = 13.000
+
+            Category_Dropdown_Arrow.Name = "Category_Dropdown_Arrow"
+            Category_Dropdown_Arrow.Parent = Category_Dropdown
+            Category_Dropdown_Arrow.BackgroundColor3 = RGB(255, 255, 255)
+            Category_Dropdown_Arrow.BackgroundTransparency = 1.000
+            Category_Dropdown_Arrow.Position = u2(1, -15, 0.5, -3)
+            Category_Dropdown_Arrow.Size = u2(0, 10, 0, 6)
+            Category_Dropdown_Arrow.ZIndex = 4
+            Category_Dropdown_Arrow.Image = "rbxassetid://6820979846"
+            Category_Dropdown_Arrow.ImageColor3 = RGB(207, 207, 222)
+
+            Category_Dropdown.MouseEnter:Connect(function()
+                TS:Create(Category_Dropdown, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(20, 21, 31)}):Play()
+            end)
+        
+            Category_Dropdown.MouseLeave:Connect(function()
+                TS:Create(Category_Dropdown, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
+            end)
+
+            local Category_Toggle = false
+            local previous_size_1 = 0
+            local previous_size_2 = 0
+
+            local function TOGGLE_CATEGORY()
+                Category_Toggle = not Category_Toggle
+
+                Category_Background.Visible = Category_Toggle
+                if Category_Toggle then
+                    Category_Background.Size = u2(1, -18, 0, previous_size_1)
+                    Category.Size = u2(1, 0, 0, previous_size_2)
+                    Category_Dropdown_Arrow.Rotation = 90
+                else
+                    Category_Dropdown_Arrow.Rotation = 0
+                    if Options_List_Layout.AbsoluteContentSize.Y > 0 then
+                        previous_size_1 = Options_List_Layout.AbsoluteContentSize.Y+10
+                        previous_size_2 = Options_List_Layout.AbsoluteContentSize.Y+40
+                    else
+                        previous_size_1 = 0
+                        previous_size_2 = 30
+                    end
+                    Category_Background.Size = u2(1, -18, 0, 0)
+                    Category.Size = u2(1, 0, 0, 30)
+                end
+            end
+
+            TOGGLE_CATEGORY()
+
+            Category_Dropdown.MouseButton1Click:Connect(function()
+                TOGGLE_CATEGORY()
+            end)
+
+            Options_List_Layout.Changed:Connect(function(newproperty)
+                if tostring(newproperty) == "AbsoluteContentSize"  then
+                    if Options_List_Layout.AbsoluteContentSize.Y > 0 then
+                        Category_Background.Size = u2(1, -18, 0, Options_List_Layout.AbsoluteContentSize.Y+10)
+                        if Category_Toggle then
+                            Category.Size = u2(1, 0, 0, Options_List_Layout.AbsoluteContentSize.Y+40)
+                        end
+                    else 
+                        Category_Background.Size = u2(1, -18, 0, 0)
+                        if Category_Toggle == false then
+                            Category.Size = u2(1, 0, 0, 30)
+                        end
+                    end
+                end
+            end)
+
+            local cat_funcs = {}
+
+            cat_funcs.Toggle = function()
+                TOGGLE_CATEGORY()
+            end
+
+            cat_funcs.NewButton = function(button_name, CallBack)
+                if CallBack ~= nil then else return end
+
                 local Button = new("Frame")
-                local Detector = new("TextButton")
+                local Button_Title = new("TextLabel")
+                local Detector = new("ImageButton")
+                local Click_Icon = new("ImageLabel")
 
-                Button.Name = "Button"
-                Button.Parent = Section
+                Button.Name = button_name
+                Button.Parent = Options_Holder
                 Button.BackgroundColor3 = RGB(255, 255, 255)
                 Button.BackgroundTransparency = 1.000
-                Button.BorderSizePixel = 0
-                Button.Position = u2(0, 0, 0.134468913, 0)
-                Button.Size = u2(1, 0, 0, 30)
+                Button.Size = u2(1, 0, 0, 25)
+                Button.ZIndex = 4
+
+                Button_Title.Name = "Button_Title"
+                Button_Title.Parent = Button
+                Button_Title.BackgroundColor3 = RGB(255, 255, 255)
+                Button_Title.BackgroundTransparency = 1.000
+                Button_Title.Position = u2(0, 10, 0, 0)
+                Button_Title.Size = u2(0, 1, 1, 0)
+                Button_Title.ZIndex = 5
+                Button_Title.Font = Enum.Font.SourceSans
+                Button_Title.Text = button_name
+                Button_Title.TextColor3 = RGB(255, 255, 255)
+                Button_Title.TextSize = 14
+                Button_Title.TextXAlignment = Enum.TextXAlignment.Left
 
                 Detector.Name = "Detector"
                 Detector.Parent = Button
-                Detector.BackgroundColor3 = RGB(29, 29, 29)
-                Detector.BorderColor3 = _G["Theme"]["Button"]
-                Detector.Position = u2(0, 10, 0.5, -10)
-                Detector.Size = u2(1, -20, 0, 20)
+                Detector.BackgroundColor3 = RGB(25, 26, 36)
+                Detector.BackgroundTransparency = 0
+                Detector.BorderColor3 = RGB(58, 58, 85)
+                Detector.Position = u2(1, -30, 0.5, -10)
+                Detector.Size = u2(0, 20, 0, 20)
+                Detector.ZIndex = 5
                 Detector.AutoButtonColor = false
-                Detector.Font = Enum.Font.SourceSans
-                Detector.Text = name
-                Detector.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                Detector.TextSize = 14.000
+                Detector.Image = ""
 
-                Section.Size = u2(1, 0, 0, SectionListLayout.AbsoluteContentSize.Y)
+                Click_Icon.Parent = Detector
+                Click_Icon.BackgroundTransparency = 1
+                Click_Icon.Position = u2(0.5, -8, 0.5, -8)
+                Click_Icon.Size = u2(0, 16, 0, 16)
+                Click_Icon.ZIndex = 6
+                Click_Icon.Image = "rbxassetid://7193825942"
+                Click_Icon.ImageColor3 = RGB(255, 255, 255)
+                Click_Icon.ScaleType = Enum.ScaleType.Fit
 
                 Detector.MouseEnter:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.3}):Play()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(20, 21, 31)}):Play()
+                    TS:Create(Click_Icon, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {ImageColor3 = RGB(200, 200, 200)}):Play()
                 end)
             
                 Detector.MouseLeave:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
+                    TS:Create(Click_Icon, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {ImageColor3 = RGB(255, 255, 255)}):Play()
                 end)
 
                 Detector.MouseButton1Click:Connect(function()
-                    -- Click:Play()
                     CallBack()
                 end)
 
-                local button_function_library = {}
-                function button_function_library:Fire(times)
-                    local n = times or 1
-                    for i = 1, n do
+                local button_funcs = {}
+
+                button_funcs.Fire = function(n)
+                    for i = 1, n or 1 do
                         CallBack()
                     end
                 end
-
-                return button_function_library
             end
-            function function_library:NewToggle(name, CallBack, info)
+
+            cat_funcs.NewToggle = function(toggle_name, CallBack, info)
+                if CallBack ~= nil and info ~= nil then else return end
+
+                local current_state = info.default or false
+
                 local Toggle = new("Frame")
-                local ToggleName = new("TextLabel")
+                local Toggle_Title = new("TextLabel")
                 local Detector = new("TextButton")
+                local UICorner_Detector = new("UICorner")
+                local Toggle_Bob = new("Frame")
+                local UICorner_Bob = new("UICorner")
 
-                Toggle.Name = "Toggle"
-                Toggle.Parent = Section
+                Toggle.Name = toggle_name
+                Toggle.Parent = Options_Holder
                 Toggle.BackgroundColor3 = RGB(255, 255, 255)
-                Toggle.BackgroundTransparency = 1.000
-                Toggle.BorderSizePixel = 0
-                Toggle.Position = u2(0, 0, 0.134468913, 0)
-                Toggle.Size = u2(1, 0, 0, 30)
+                Toggle.BackgroundTransparency = 1
+                Toggle.Size = u2(1, 0, 0, 25)
+                Toggle.ZIndex = 4
 
-                ToggleName.Name = "ToggleName"
-                ToggleName.Parent = Toggle
-                ToggleName.BackgroundColor3 = RGB(255, 255, 255)
-                ToggleName.BackgroundTransparency = 1.000
-                ToggleName.Position = u2(0, 10, 0, 0)
-                ToggleName.Size = u2(0, 2, 1, 0)
-                ToggleName.Font = Enum.Font.SourceSans
-                ToggleName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                ToggleName.Text = name
-                ToggleName.TextSize = 15.000
-                ToggleName.TextXAlignment = Enum.TextXAlignment.Left
+                Toggle_Title.Name = "Toggle_Title"
+                Toggle_Title.Parent = Toggle
+                Toggle_Title.BackgroundColor3 = RGB(255, 255, 255)
+                Toggle_Title.BackgroundTransparency = 1.000
+                Toggle_Title.Position = u2(0, 10, 0, 0)
+                Toggle_Title.Size = u2(0, 1, 1, 0)
+                Toggle_Title.ZIndex = 5
+                Toggle_Title.Font = Enum.Font.SourceSans
+                Toggle_Title.Text = toggle_name
+                Toggle_Title.TextColor3 = RGB(207, 207, 222)
+                Toggle_Title.TextSize = 14
+                Toggle_Title.TextXAlignment = Enum.TextXAlignment.Left
 
                 Detector.Name = "Detector"
                 Detector.Parent = Toggle
-                Detector.BackgroundColor3 = RGB(29, 29, 29)
-                Detector.BorderColor3 = _G["Theme"]["Toggle"]
-                Detector.Position = u2(1, -28, 0.5, -9)
-                Detector.Size = u2(0, 18, 0, 18)
+                Detector.BorderSizePixel = 0
+                Detector.Position = u2(1, -40, 0.5, -5)
+                Detector.Size = u2(0, 30, 0, 10)
+                Detector.ZIndex = 5
                 Detector.AutoButtonColor = false
-                Detector.Font = Enum.Font.Code
+                Detector.Font = Enum.Font.SourceSans
                 Detector.Text = ""
-                Detector.TextColor3 = RGB(255, 255, 255)
-                Detector.TextSize = 13.000
+                Detector.TextColor3 = RGB(0, 0, 0)
+                Detector.TextSize = 14.000
 
-                local default = info.default or false
+                UICorner_Detector.Name = "UICorner_Detector"
+                UICorner_Detector.Parent = Detector
+                UICorner_Detector.CornerRadius = UDim.new(0, 4)
 
-                local bool = default
-                if bool == true then
-                    Detector.Text = "X"
-                else
-                    Detector.Text = ""
+                Toggle_Bob.Name = "Toggle_Bob"
+                Toggle_Bob.Parent = Detector
+                Toggle_Bob.BorderSizePixel = 0
+                Toggle_Bob.Size = u2(0, 14, 0, 14)
+                Toggle_Bob.ZIndex = 5
+
+                UICorner_Bob.Name = "UICorner_Bob"
+                UICorner_Bob.Parent = Toggle_Bob
+                UICorner_Bob.CornerRadius = UDim.new(0, 7)
+
+                local function Place_Colors()
+                    if current_state then
+                        TS:Create(Detector, tween(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(190, 190, 203)}):Play()
+                        TS:Create(Toggle_Bob, tween(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(238, 238, 255)}):Play()
+                        TS:Create(Toggle_Title, tween(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextColor3 = RGB(255, 255, 255)}):Play()
+
+                        TS:Create(Toggle_Bob, tween(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = u2(1, -14, 0, -2)}):Play()
+                    else
+                        TS:Create(Detector, tween(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(118, 122, 145)}):Play()
+                        TS:Create(Toggle_Bob, tween(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(143, 147, 171)}):Play()
+                        TS:Create(Toggle_Title, tween(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextColor3 = RGB(207, 207, 222)}):Play()
+
+                        TS:Create(Toggle_Bob, tween(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = u2(0, 0, 0, -2)}):Play()
+                    end
                 end
 
-                Section.Size = u2(1, 0, 0, SectionListLayout.AbsoluteContentSize.Y)
+                Place_Colors()
 
-                Detector.MouseEnter:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.3}):Play()
-                end)
-            
-                Detector.MouseLeave:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-                end)
-
-                local function Toggle()
-                    bool = not bool
-                    if bool == true then
-                        Detector.Text = "X"
-                    else
-                        Detector.Text = ""
-                    end
-                    CallBack(bool)
+                local function TOGGLE_TOGGLE()
+                    current_state = not current_state
+                    CallBack(current_state)
+                    Place_Colors()
                 end
 
                 Detector.MouseButton1Click:Connect(function()
-                    -- Click:Play()
-                    Toggle()
+                    TOGGLE_TOGGLE()
                 end)
-                local current_bind = info.keybind or nil
 
-                local c
-                c = UIS.InputBegan:Connect(function(input)
+                local toggle_funcs = {}
+
+                toggle_funcs.Toggle = function()
+                    TOGGLE_TOGGLE()
+                end
+
+                return toggle_funcs
+            end
+
+            cat_funcs.NewSlider = function(slider_name, CallBack, info)
+                if CallBack ~= nil and info ~= nil then else return end
+
+                local decimals = info.decimals or 1
+                local function RoundValue(val)
+                    if decimals >= 1 then
+                        local str = "1"
+                        for i = 1, decimals do 
+                            str = str.."0"
+                        end
+                        return round(val * tonumber(str))/tonumber(str)
+                    else
+                        return round(val)
+                    end
+                end
+
+                local suffix = info.suffix or ""
+                local current_value = RoundValue(info.default or ((info.min + info.max)/2))
+
+                local Slider = new("Frame")
+                local Slider_Title = new("TextLabel")
+                local Detector = new("TextButton")
+                local Bar = new("Frame")
+                local Filled = new("Frame")
+                local Slider_Value = new("TextLabel")
+
+                Slider.Name = slider_name
+                Slider.Parent = Options_Holder
+                Slider.BackgroundColor3 = RGB(255, 255, 255)
+                Slider.BackgroundTransparency = 1.000
+                Slider.Size = u2(1, 0, 0, 25)
+                Slider.ZIndex = 4
+
+                Slider_Title.Name = "Slider_Title"
+                Slider_Title.Parent = Slider
+                Slider_Title.BackgroundColor3 = RGB(255, 255, 255)
+                Slider_Title.BackgroundTransparency = 1.000
+                Slider_Title.Position = u2(0, 10, 0, 0)
+                Slider_Title.Size = u2(0, 1, 1, 0)
+                Slider_Title.ZIndex = 5
+                Slider_Title.Font = Enum.Font.SourceSans
+                Slider_Title.Text = slider_name
+                Slider_Title.TextColor3 = RGB(255, 255, 255)
+                Slider_Title.TextSize = 14
+                Slider_Title.TextXAlignment = Enum.TextXAlignment.Left
+
+                Detector.Name = "Detector"
+                Detector.Parent = Slider
+                Detector.BackgroundColor3 = RGB(118, 122, 145)
+                Detector.BackgroundTransparency = 1.000
+                Detector.BorderSizePixel = 0
+                Detector.Position = u2(0.699999988, -10, 0.5, -4)
+                Detector.Size = u2(0.300000012, 0, 0, 8)
+                Detector.ZIndex = 5
+                Detector.AutoButtonColor = false
+                Detector.Font = Enum.Font.SourceSans
+                Detector.Text = ""
+                Detector.TextColor3 = RGB(0, 0, 0)
+                Detector.TextSize = 14.000
+
+                Bar.Name = "Bar"
+                Bar.Parent = Detector
+                Bar.BackgroundColor3 = RGB(118, 122, 145)
+                Bar.BorderSizePixel = 0
+                Bar.Position = u2(0, 0, 0.5, -2)
+                Bar.Size = u2(1, 0, 0, 4)
+                Bar.ZIndex = 5
+
+                Filled.Name = "Filled"
+                Filled.Parent = Bar
+                Filled.BackgroundColor3 = RGB(210, 210, 225)
+                Filled.BorderSizePixel = 0
+                Filled.Position = u2(0, 0, 0.5, -2)
+                Filled.Size = u2(0, 100, 0, 4)
+                Filled.ZIndex = 6
+
+                Slider_Value.Name = "Slider_Value"
+                Slider_Value.Parent = Slider
+                Slider_Value.BackgroundColor3 = RGB(255, 255, 255)
+                Slider_Value.BackgroundTransparency = 1.000
+                Slider_Value.Position = u2(0.699999988, -50, 0, 0)
+                Slider_Value.Size = u2(0, 30, 1, 0)
+                Slider_Value.ZIndex = 5
+                Slider_Value.Font = Enum.Font.SourceSans
+                Slider_Value.Text = current_value..tostring(suffix)  
+                Slider_Value.TextColor3 = RGB(238, 238, 255)
+                Slider_Value.TextSize = 14.000
+                Slider_Value.TextXAlignment = Enum.TextXAlignment.Right
+
+                local Dragging = false
+                Detector.MouseButton1Down:Connect(function()
+                    Dragging = true
+                end)
+                local c_up
+                c_up = UIS.InputEnded:Connect(function(input)
                     if DESTROY_GUI then
-                        c:Disconnect()
-                    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == current_bind then
-                        -- Click:Play()
-                        Toggle()
+                        c_up:Disconnect()
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        Dragging = false
                     end
                 end)
 
-                local toggle_function_library = {}
-                function toggle_function_library:UpdateKeybind(newbind)
-                    current_bind = newbind
+                local min = info.min
+                local max = info.max
+                local difference = max - min
+
+                local function PlaceValue(val)
+                    local newval = clamp(val, min, max)
+                    local offset = (newval - min) * Bar.AbsoluteSize.X / difference
+                    if Slider_Value.Text ~= tostring(newval)..tostring(suffix) then
+                        Slider_Value.Text = tostring(newval)..tostring(suffix)
+                    end
+                    Filled.Size = u2(0, clamp(offset, 0, Bar.AbsoluteSize.X), 0, 4)
                 end
 
-                function toggle_function_library:Toggle()
-                    Toggle()
+                PlaceValue(current_value)
+
+                local previous_value = nil
+                local slider_connection 
+                slider_connection = RS.RenderStepped:Connect(function()
+                    if DESTROY_GUI then
+                        slider_connection:Disconnect()
+                    elseif Dragging then
+                        -- PLACING
+                        local offset = Mouse.X - Bar.AbsolutePosition.X
+                        local new_x = clamp(offset, 0, Bar.AbsoluteSize.X)
+                        
+                        -- CALCULATIONS
+                        if decimals >= 1 then
+                            local str = "1"
+                            for i = 1, decimals do 
+                                str = str.."0"
+                            end
+                            current_value = RoundValue(new_x * difference / Bar.AbsoluteSize.X + min)
+                        else
+                            current_value = RoundValue(new_x * difference / Bar.AbsoluteSize.X + min)
+                        end
+
+                        if previous_value ~= current_value then
+                            CallBack(current_value)
+                            previous_value = current_value
+                        end
+                        PlaceValue(current_value)
+                    else
+                        PlaceValue(current_value)
+                    end
+                end)
+
+                local slider_funcs = {}
+
+                slider_funcs.SetValue = function(val)
+                    current_value = clamp(val, min, max)
+                    CallBack(current_value)
+                    PlaceValue(current_value)
+                end
+                return slider_funcs
+            end
+
+            cat_funcs.NewKeybind = function(keybind_name, CallBack, KeyCallBack, info)
+                if CallBack ~= nil and info ~= nil then else return end
+
+                local Current_Keybind = info.default or Enum.KeyCode.Q
+
+                local Keybind = new("Frame")
+                local Keybind_Title = new("TextLabel")
+                local Detector = new("TextButton")
+
+                Keybind.Name = keybind_name
+                Keybind.Parent = Options_Holder
+                Keybind.BackgroundColor3 = RGB(255, 255, 255)
+                Keybind.BackgroundTransparency = 1.000
+                Keybind.Size = u2(1, 0, 0, 25)
+                Keybind.ZIndex = 4
+
+                Keybind_Title.Name = "Keybind_Title"
+                Keybind_Title.Parent = Keybind
+                Keybind_Title.BackgroundColor3 = RGB(255, 255, 255)
+                Keybind_Title.BackgroundTransparency = 1.000
+                Keybind_Title.Position = u2(0, 10, 0, 0)
+                Keybind_Title.Size = u2(0, 1, 1, 0)
+                Keybind_Title.ZIndex = 5
+                Keybind_Title.Font = Enum.Font.SourceSans
+                Keybind_Title.Text = keybind_name
+                Keybind_Title.TextColor3 = RGB(255, 255, 255)
+                Keybind_Title.TextSize = 14
+                Keybind_Title.TextXAlignment = Enum.TextXAlignment.Left
+
+                Detector.Name = "Detector"
+                Detector.Parent = Keybind
+                Detector.BackgroundColor3 = RGB(25, 26, 36)
+                Detector.BackgroundTransparency = 0
+                Detector.BorderColor3 = RGB(58, 58, 85)
+                Detector.Position = u2(1, -30, 0.5, -10)
+                Detector.Size = u2(0, 20, 0, 20)
+                Detector.ZIndex = 5
+                Detector.AutoButtonColor = false
+                Detector.Font = Enum.Font.SourceSans
+                Detector.TextSize = 13
+                Detector.Text = sub(tostring(Current_Keybind), 14, #tostring(Current_Keybind)) 
+                Detector.TextColor3 = RGB(238, 238, 255)
+
+                Detector.MouseEnter:Connect(function()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(20, 21, 31)}):Play()
+                end)
+            
+                Detector.MouseLeave:Connect(function()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
+                end)
+
+                local function SCALE()
+                    local newsize = Detector.TextBounds.X+8
+                    Detector.Size = u2(0, newsize, 0, 20)
+                    Detector.Position = u2(1, -newsize-10, 0.5, -10)
+                end
+                SCALE()
+
+                local Selecting = false
+                Detector.MouseButton1Click:Connect(function()
+                    Selecting = true
+                    Detector.Text = ""
+                    local connection
+                    local connection2
+
+                    connection = UIS.InputBegan:Connect(function(input, gameProcessed)
+                        if DESTROY_GUI then
+                            connection:Disconnect()
+                        elseif not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Backspace then
+                            local newkey = false
+                            if Current_Keybind ~= input.KeyCode then
+                                newkey = true
+                            end
+                            Current_Keybind = input.KeyCode
+                            Detector.Text = sub(tostring(Current_Keybind), 14, #tostring(Current_Keybind))
+                            if newkey then
+                                SCALE()
+                                KeyCallBack(Current_Keybind)
+                            end
+                            connection:Disconnect()
+                            connection2:Disconnect()
+                            wait()
+                            Selecting = false
+                        end
+                    end)
+                    connection2 = UIS.InputBegan:Connect(function(input, gameProcessed)
+                        if DESTROY_GUI then
+                            connection2:Disconnect()
+                        elseif not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Backspace then
+                            Detector.Text = "None"
+                            SCALE()
+                            Current_Keybind = nil
+                            KeyCallBack(Current_Keybind)
+                            connection:Disconnect()
+                            connection2:Disconnect()
+                            wait()
+                            Selecting = false
+                        end
+                    end)
+                end)
+
+                local c
+                c = UIS.InputBegan:Connect(function(input, gameProcessed)
+                    if DESTROY_GUI then
+                        c:Disconnect()
+                    elseif not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Current_Keybind and Selecting == false then
+                        CallBack()
+                    end
+                end)
+
+                local keybind_funcs = {}
+
+                keybind_funcs.SetKeybind = function(newbind)
+                    if newbind ~= Enum.KeyCode.Backspace and Enum.KeyCode[sub(tostring(newbind), 14, #tostring(newbind))] ~= nil then
+                        Current_Keybind = newbind
+                        Detector.Text = sub(tostring(Current_Keybind), 14, #tostring(Current_Keybind))
+                        SCALE()
+                        KeyCallBack(Current_Keybind)
+                    end
                 end
 
-                return toggle_function_library
+                return keybind_funcs
             end
-            local function MouseNotIn(obj)
-                if (Mouse.X < obj.AbsolutePosition.X or Mouse.X > obj.AbsolutePosition.X + obj.AbsoluteSize.X) or (Mouse.Y < obj.AbsolutePosition.Y or Mouse.Y > obj.AbsolutePosition.Y + obj.AbsoluteSize.Y) then
-                    return true
-                end
-                return false
-            end
-            function function_library:NewColorPicker(name, CallBack, info)
+
+            cat_funcs.NewColorpicker = function(picker_name, CallBack, info)
+                if CallBack ~= nil and info ~= nil then else return end
+
                 local ColorPicker = new("Frame")
-                local PickerName = new("TextLabel")
-                local Detector = new("ImageButton")
+                local Picker_Title = new("TextLabel")
+                local Detector = new("TextButton")
+                local Detector_Gradient = new("UIGradient")
                 local PickerFrame = new("Frame")
                 local HSVBox = new("ImageButton")
                 local Cursor = new("Frame")
@@ -562,165 +1140,161 @@ function Library:NewWindow()
                 local Value3 = new("TextBox")
                 local CopyValues = new("TextButton")
 
-                ColorPicker.Name = "ColorPicker"
-                ColorPicker.Parent = Section
+                ColorPicker.Name = picker_name
+                ColorPicker.Parent = Options_Holder
                 ColorPicker.BackgroundColor3 = RGB(255, 255, 255)
                 ColorPicker.BackgroundTransparency = 1.000
-                ColorPicker.BorderSizePixel = 0
-                ColorPicker.Position = u2(0, 0, 0.134468913, 0)
-                ColorPicker.Size = u2(1, 0, 0, 30)
+                ColorPicker.Size = u2(1, 0, 0, 25)
+                ColorPicker.ZIndex = 4
 
-                PickerName.Name = "PickerName"
-                PickerName.Parent = ColorPicker
-                PickerName.BackgroundColor3 = RGB(255, 255, 255)
-                PickerName.BackgroundTransparency = 1.000
-                PickerName.Position = u2(0, 10, 0, 0)
-                PickerName.Size = u2(0, 2, 1, 0)
-                PickerName.Font = Enum.Font.SourceSans
-                PickerName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                PickerName.TextSize = 15.000
-                PickerName.Text = name
-                PickerName.TextXAlignment = Enum.TextXAlignment.Left
+                Picker_Title.Name = "Picker_Title"
+                Picker_Title.Parent = ColorPicker
+                Picker_Title.BackgroundColor3 = RGB(255, 255, 255)
+                Picker_Title.BackgroundTransparency = 1.000
+                Picker_Title.Position = u2(0, 10, 0, 0)
+                Picker_Title.Size = u2(0, 1, 1, 0)
+                Picker_Title.ZIndex = 5
+                Picker_Title.Font = Enum.Font.SourceSans
+                Picker_Title.Text = picker_name
+                Picker_Title.TextColor3 = RGB(255, 255, 255)
+                Picker_Title.TextSize = 14
+                Picker_Title.TextXAlignment = Enum.TextXAlignment.Left
 
                 Detector.Name = "Detector"
                 Detector.Parent = ColorPicker
-                Detector.BackgroundColor3 = info.default or RGB(255, 255, 255)
-                Detector.BorderColor3 = _G["Theme"]["Color_Picker"]
-                Detector.BackgroundTransparency = 0
-                Detector.BorderSizePixel = 1
-                Detector.Position = u2(1, -34, 0.5, -6)
-                Detector.ImageTransparency = 1
-                Detector.Size = u2(0, 25, 0, 12)
-                Detector.ZIndex = 2
+                Detector.BackgroundColor3 = RGB(255, 0, 4)
+                Detector.BorderColor3 = RGB(58, 58, 85)
+                Detector.BorderSizePixel = 2
+                Detector.BorderMode = Enum.BorderMode.Inset
+                Detector.Position = u2(1, -35, 0.5, -8)
+                Detector.Size = u2(0, 25, 0, 16)
+                Detector.ZIndex = 5
                 Detector.AutoButtonColor = false
+                Detector.Font = Enum.Font.SourceSans
+                Detector.Text = ""
+                Detector.TextColor3 = RGB(238, 238, 255)
+                Detector.TextSize = 14.000
+
+                Detector_Gradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, RGB(255, 255, 255)), ColorSequenceKeypoint.new(0.54, RGB(225, 225, 225)), ColorSequenceKeypoint.new(1.00, RGB(112, 112, 112))}
+                Detector_Gradient.Rotation = 90
+                Detector_Gradient.Name = "Detector_Gradient"
+                Detector_Gradient.Parent = Detector
 
                 Detector.MouseEnter:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.3}):Play()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.2}):Play()
                 end)
             
                 Detector.MouseLeave:Connect(function()
                     TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
                 end)
 
-                Section.Size = u2(1, 0, 0, SectionListLayout.AbsoluteContentSize.Y)
-
-                NewPickerLayer()
                 PickerFrame.Name = "PickerFrame"
                 PickerFrame.Parent = ColorPicker
-                PickerFrame.BackgroundColor3 = RGB(32, 32, 32)
-                PickerFrame.BorderColor3 = _G["Theme"]["Color_Picker_Selector_Frame"]
-                PickerFrame.ClipsDescendants = true
+                PickerFrame.BackgroundColor3 = RGB(25, 26, 36)
+                PickerFrame.BorderColor3 = RGB(58, 58, 85)
+                PickerFrame.Position = u2(1, -131, 1, 2)
                 PickerFrame.Visible = false
-                PickerFrame.ZIndex = pickerzindex
-                PickerFrame.Position = u2(1, -150, 1, 0)
-                PickerFrame.Size = u2(0, 140, 0, 175)
+                PickerFrame.Size = u2(0, 120, 0, 158)
+                PickerFrame.ZIndex = 10
 
-                NewPickerLayer()
                 HSVBox.Name = "HSVBox"
                 HSVBox.Parent = PickerFrame
                 HSVBox.BackgroundColor3 = RGB(255, 255, 255)
-                HSVBox.BorderColor3 = RGB(28, 28, 28)
-                HSVBox.Position = u2(0, 5, 0, 5)
-                HSVBox.Size = u2(0, 115, 0, 115)
-                HSVBox.ZIndex = pickerzindex
+                HSVBox.BorderColor3 = RGB(58, 58, 85)
+                HSVBox.Position = u2(0, 4, 0, 4)
+                HSVBox.Size = u2(0, 98, 0, 98)
+                HSVBox.ZIndex = 10
                 HSVBox.AutoButtonColor = false
                 HSVBox.Image = "rbxassetid://4155801252"
+
+                Cursor.Name = "Cursor"
+                Cursor.Parent = HSVBox
+                Cursor.BackgroundColor3 = RGB(255, 255, 255)
+                Cursor.BorderColor3 = RGB(0, 0, 0)
+                Cursor.Size = u2(0, 2, 0, 2)
+                Cursor.ZIndex = 11
 
                 HUEPicker.Name = "HUEPicker"
                 HUEPicker.Parent = PickerFrame
                 HUEPicker.BackgroundColor3 = RGB(255, 255, 255)
-                HUEPicker.BorderColor3 = RGB(28, 28, 28)
-                HUEPicker.Position = u2(1, -15, 0, 5)
-                HUEPicker.Size = u2(0, 10, 0, 115)
-                HUEPicker.Rotation = 0
-                HUEPicker.ZIndex = pickerzindex
+                HUEPicker.BorderColor3 = RGB(58, 58, 85)
+                HUEPicker.Position = u2(0, 106, 0, 4)
+                HUEPicker.Size = u2(0, 10, 0, 98)
+                HUEPicker.ZIndex = 10
                 HUEPicker.AutoButtonColor = false
-                HUEPicker.ImageTransparency = 1.000
-
-                NewPickerLayer()
-                Value1.Name = "Value1"
-                Value1.Parent = PickerFrame
-                Value1.BackgroundColor3 = RGB(28, 28, 28)
-                Value1.BorderColor3 = RGB(25, 25, 25)
-                Value1.Position = u2(0, 5, 1, -50)
-                Value1.Size = u2(0.330000013, -10, 0, 20)
-                Value1.ClearTextOnFocus = false
-                Value1.Font = Enum.Font.SourceSans
-                Value1.PlaceholderColor3 = RGB(255, 255, 255)
-                Value1.Text = ""
-                Value1.ZIndex = pickerzindex
-                Value1.TextColor3 = RGB(255, 255, 255)
-                Value1.TextSize = 14.000
-
-                Value2.Name = "Value2"
-                Value2.Parent = PickerFrame
-                Value2.BackgroundColor3 = RGB(28, 28, 28)
-                Value2.BorderColor3 = RGB(25, 25, 25)
-                Value2.Position = u2(0, 45, 1, -50)
-                Value2.Size = u2(0.330000013, -10, 0, 20)
-                Value2.ClearTextOnFocus = false
-                Value2.Font = Enum.Font.SourceSans
-                Value2.PlaceholderColor3 = RGB(255, 255, 255)
-                Value2.Text = ""
-                Value2.ZIndex = pickerzindex
-                Value2.TextColor3 = RGB(255, 255, 255)
-                Value2.TextSize = 14.000
-
-                Value3.Name = "Value3"
-                Value3.Parent = PickerFrame
-                Value3.BackgroundColor3 = RGB(28, 28, 28)
-                Value3.BorderColor3 = RGB(25, 25, 25)
-                Value3.Position = u2(0, 85, 1, -50)
-                Value3.Size = u2(0.330000013, -10, 0, 20)
-                Value3.ClearTextOnFocus = false
-                Value3.Font = Enum.Font.SourceSans
-                Value3.ZIndex = pickerzindex
-                Value3.PlaceholderColor3 = RGB(255, 255, 255)
-                Value3.Text = ""
-                Value3.TextColor3 = RGB(255, 255, 255)
-                Value3.TextSize = 14.000
-
-                CopyValues.Name = "CopyValues"
-                CopyValues.Parent = PickerFrame
-                CopyValues.AutoButtonColor = false
-                CopyValues.BackgroundColor3 = RGB(28, 28, 28)
-                CopyValues.BorderColor3 = RGB(25, 25, 25)
-                CopyValues.Position = u2(0, 5, 1, -25)
-                CopyValues.Size = u2(0, 116, 0, 20)
-                CopyValues.ZIndex = pickerzindex
-                CopyValues.Font = Enum.Font.SourceSans
-                CopyValues.Text = "Copy"
-                CopyValues.TextColor3 = RGB(255, 255, 255)
-                CopyValues.TextSize = 14.000
-
-                NewPickerLayer()
-                Cursor.Name = "Cursor"
-                Cursor.Parent = HSVBox
-                Cursor.BackgroundColor3 = RGB(255, 255, 255)
-                Cursor.BorderColor3 = RGB(28, 28, 28)
-                -- Cursor.Rotation = 45.000
-                Cursor.Position =  u2(0, 0, 0, 0)
-                Cursor.ZIndex = pickerzindex
-                Cursor.Size = u2(0, 2, 0, 2)
+                HUEPicker.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
 
                 HUEGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, RGB(255, 0, 4)), ColorSequenceKeypoint.new(0.10, RGB(255, 0, 200)), ColorSequenceKeypoint.new(0.20, RGB(153, 0, 255)), ColorSequenceKeypoint.new(0.30, RGB(0, 0, 255)), ColorSequenceKeypoint.new(0.40, RGB(0, 149, 255)), ColorSequenceKeypoint.new(0.50, RGB(0, 255, 209)), ColorSequenceKeypoint.new(0.60, RGB(0, 255, 55)), ColorSequenceKeypoint.new(0.70, RGB(98, 255, 0)), ColorSequenceKeypoint.new(0.80, RGB(251, 255, 0)), ColorSequenceKeypoint.new(0.90, RGB(255, 106, 0)), ColorSequenceKeypoint.new(1.00, RGB(255, 0, 0))}
                 HUEGradient.Rotation = 90
+                HUEGradient.Name = "HUEGradient"
                 HUEGradient.Parent = HUEPicker
 
                 Indicator.Name = "Indicator"
                 Indicator.Parent = HUEPicker
                 Indicator.BackgroundColor3 = RGB(255, 255, 255)
-                Indicator.BorderColor3 = RGB(28, 28, 28)
-                Indicator.Position =  u2(0, 0, 0, 0)
-                Indicator.ZIndex = pickerzindex
+                Indicator.BorderColor3 = RGB(0, 0, 0)
                 Indicator.Size = u2(1, 0, 0, 2)
+                Indicator.ZIndex = 11
+
+                Value1.Name = "Value1"
+                Value1.Parent = PickerFrame
+                Value1.BackgroundColor3 = RGB(25, 26, 36)
+                Value1.BorderColor3 = RGB(58, 58, 85)
+                Value1.Position = u2(0, 5, 0, 108)
+                Value1.Size = u2(0, 32, 0, 20)
+                Value1.ZIndex = 11
+                Value1.Font = Enum.Font.SourceSans
+                Value1.PlaceholderColor3 = RGB(178, 178, 178)
+                Value1.PlaceholderText = "R"
+                Value1.Text = ""
+                Value1.TextColor3 = RGB(238, 238, 255)
+                Value1.TextSize = 13.000
+
+                Value2.Name = "Value2"
+                Value2.Parent = PickerFrame
+                Value2.BackgroundColor3 = RGB(25, 26, 36)
+                Value2.BorderColor3 = RGB(58, 58, 85)
+                Value2.Position = u2(0, 44, 0, 108)
+                Value2.Size = u2(0, 32, 0, 20)
+                Value2.ZIndex = 11
+                Value2.Font = Enum.Font.SourceSans
+                Value2.PlaceholderText = "G"
+                Value2.Text = ""
+                Value2.TextColor3 = RGB(238, 238, 255)
+                Value2.TextSize = 13.000
+
+                Value3.Name = "Value3"
+                Value3.Parent = PickerFrame
+                Value3.BackgroundColor3 = RGB(25, 26, 36)
+                Value3.BorderColor3 = RGB(58, 58, 85)
+                Value3.Position = u2(0, 83, 0, 108)
+                Value3.Size = u2(0, 32, 0, 20)
+                Value3.ZIndex = 11
+                Value3.Font = Enum.Font.SourceSans
+                Value3.PlaceholderText = "B"
+                Value3.Text = ""
+                Value3.TextColor3 = RGB(238, 238, 255)
+                Value3.TextSize = 13.000
+
+                CopyValues.Name = "CopyValues"
+                CopyValues.Parent = PickerFrame
+                CopyValues.BackgroundColor3 = RGB(25, 26, 36)
+                CopyValues.BorderColor3 = RGB(58, 58, 85)
+                CopyValues.Position = u2(0, 4, 0, 134)
+                CopyValues.Size = u2(1, -8, 0, 20)
+                CopyValues.ZIndex = 11
+                CopyValues.AutoButtonColor = false
+                CopyValues.Font = Enum.Font.SourceSans
+                CopyValues.Text = "Copy Values"
+                CopyValues.TextColor3 = RGB(238, 238, 255)
+                CopyValues.TextSize = 13.000
 
                 CopyValues.MouseEnter:Connect(function()
-                    TS:Create(CopyValues, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.3}):Play()
+                    TS:Create(CopyValues, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(20, 21, 31)}):Play()
                 end)
             
                 CopyValues.MouseLeave:Connect(function()
-                    TS:Create(CopyValues, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
+                    TS:Create(CopyValues, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
                 end)
 
                 CopyValues.MouseButton1Click:Connect(function()
@@ -737,22 +1311,7 @@ function Library:NewWindow()
                     Value3.Text = "255"
                 end
 
-                Detector.MouseButton1Click:Connect(function()
-                    -- Click:Play()
-                    PickerFrame.Visible = not PickerFrame.Visible
-                end)
-
-                local connection1
-                connection1 = UIS.InputBegan:Connect(function(input)
-                    if DESTROY_GUI then
-                        connection1:Disconnect()
-                    end
-                    if input.UserInputType == Enum.UserInputType.MouseButton2 and PickerFrame.Visible == true and MouseNotIn(PickerFrame) then
-                        PickerFrame.Visible = false
-                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 and PickerFrame.Visible == true and MouseNotIn(Detector) and MouseNotIn(PickerFrame) then
-                        PickerFrame.Visible = false
-                    end
-                end)
+                local previous = nil
 
                 local function PlaceColor(col) -- RGB Color
                     local h, s, v = ColorModule:rgbToHsv(col.r*255, col.g*255, col.b*255)
@@ -760,8 +1319,13 @@ function Library:NewWindow()
                     Indicator.Position = u2(0, 0, 0, HUEPicker.AbsoluteSize.Y - HUEPicker.AbsoluteSize.Y * h)
                     Cursor.Position = u2(0, HSVBox.AbsoluteSize.X * s - Cursor.AbsoluteSize.X/2, 0, HSVBox.AbsoluteSize.Y - HSVBox.AbsoluteSize.Y * v - Cursor.AbsoluteSize.Y/2)
 
+                    Detector.BackgroundColor3 = col
+
                     HSVBox.BackgroundColor3 = HSV(h, 1, 1)
-                    CallBack(col)
+                    if col ~= previous then
+                        previous = col
+                        CallBack(col)
+                    end
                 end
 
                 local function PlaceColorHSV(hsv) -- HSV Color
@@ -774,7 +1338,12 @@ function Library:NewWindow()
                     Value2.Text = round(news)
                     Value3.Text = round(newv)
                     Detector.BackgroundColor3 = RGB(round(newh), round(news), round(newv))
-                    CallBack(RGB(newh, news, newv))
+
+                    local col = RGB(newh, news, newv)
+                    if col ~= previous then
+                        previous = col
+                        CallBack(col)
+                    end
                 end
 
                 if info.default ~= nil then
@@ -782,7 +1351,7 @@ function Library:NewWindow()
                 else
                     PlaceColor(RGB(255, 255, 255))
                 end
-                
+
                 local SelectingHUE = false
                 local SelectingHSV = false
 
@@ -828,378 +1397,196 @@ function Library:NewWindow()
                 HSVBox.MouseButton1Down:Connect(function()
                     SelectingHSV = true
                 end)
-                local connection
-                connection = UIS.InputEnded:Connect(function(input)
+
+                local selecting_c
+                selecting_c = UIS.InputEnded:Connect(function(input)
                     if DESTROY_GUI then
-                        connection:Disconnect()
-                    end
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        selecting_c:Disconnect()
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
                         SelectingHUE = false
                         SelectingHSV = false
                     end
                 end)
                 
-                local c 
-                c = game:service("RunService").RenderStepped:Connect(function()
+                local colorpicker_c
+                colorpicker_c = function()
                     if DESTROY_GUI then
-                        c:Disconnect()
-                    end
-                    if SelectingHUE then
-                        Indicator.Position = u2(0, 0, 0, clamp(Mouse.Y - HUEPicker.AbsolutePosition.Y, 0, HUEPicker.AbsoluteSize.Y))
-                        local h1 = (HUEPicker.AbsoluteSize.Y - (Indicator.AbsolutePosition.Y - HUEPicker.AbsolutePosition.Y)) / HUEPicker.AbsoluteSize.Y
-                        local s1 = (Cursor.AbsolutePosition.X - HSVBox.AbsolutePosition.X) / HSVBox.AbsoluteSize.X
-                        local v1 = (HSVBox.AbsoluteSize.Y - (Cursor.AbsolutePosition.Y - HSVBox.AbsolutePosition.Y)) / HSVBox.AbsoluteSize.Y
-                        PlaceColorHSV({h = h1, s = s1, v = v1})
-                    end
-                    if SelectingHSV then
-                        Cursor.Position = u2(0, clamp(Mouse.X - HSVBox.AbsolutePosition.X, 0, HSVBox.AbsoluteSize.X), 0, clamp(Mouse.Y - HSVBox.AbsolutePosition.Y, 0, HSVBox.AbsoluteSize.Y))
-                        local h1 = (HUEPicker.AbsoluteSize.Y - (Indicator.AbsolutePosition.Y - HUEPicker.AbsolutePosition.Y)) / HUEPicker.AbsoluteSize.Y
-                        local s1 = (Cursor.AbsolutePosition.X - HSVBox.AbsolutePosition.X) / HSVBox.AbsoluteSize.X
-                        local v1 = (HSVBox.AbsoluteSize.Y - (Cursor.AbsolutePosition.Y - HSVBox.AbsolutePosition.Y)) / HSVBox.AbsoluteSize.Y
-                        Cursor.Position = u2(0, clamp(Mouse.X - HSVBox.AbsolutePosition.X, Cursor.AbsoluteSize.X/2, HSVBox.AbsoluteSize.X - Cursor.AbsoluteSize.X), 0, clamp(Mouse.Y - HSVBox.AbsolutePosition.Y, Cursor.AbsoluteSize.Y/2, HSVBox.AbsoluteSize.Y - Cursor.AbsoluteSize.Y))
-                        PlaceColorHSV({h = h1, s = s1, v = v1})
-                    end
-                end)
-            end
-            function function_library:NewSlider(name, CallBack, info)
-                local decimals = info.decimals or 1
-
-                local Slider = new("Frame")
-                local SliderName = new("TextLabel")
-                local Value = new("TextLabel")
-                local Detector = new("ImageButton")
-                local Bar = new("Frame")
-                local Bob = new("Frame")
-
-                Slider.Name = "Slider"
-                Slider.Parent = Section
-                Slider.BackgroundColor3 = RGB(255, 255, 255)
-                Slider.BackgroundTransparency = 1.000
-                Slider.BorderSizePixel = 0
-                Slider.Position = u2(0, 0, 1.5, 0)
-                Slider.Size = u2(0, 214, 0, 45)
-
-                SliderName.Name = "SliderName"
-                SliderName.Parent = Slider
-                SliderName.BackgroundColor3 = RGB(255, 255, 255)
-                SliderName.BackgroundTransparency = 1.000
-                SliderName.Position = u2(0, 11, 0, 0)
-                SliderName.Size = u2(0, 2, 0, 30)
-                SliderName.Font = Enum.Font.SourceSans
-                SliderName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                SliderName.Text = name
-                SliderName.TextSize = 15.000
-                SliderName.TextXAlignment = Enum.TextXAlignment.Left
-
-                Value.Name = "Value"
-                Value.Parent = Slider
-                Value.BackgroundColor3 = RGB(255, 255, 255)
-                Value.BackgroundTransparency = 1.000
-                Value.Position = u2(1, -10, 0, 0)
-                Value.Size = u2(0, 2, 0, 30)
-                Value.Font = Enum.Font.Code
-                Value.Text = tonumber(clamp(info.value, info.min, info.max))..tostring(info.suffix)
-                Value.TextColor3 = _G["Theme"]["Slider_Value"]
-                Value.TextSize = 12.000
-                Value.TextXAlignment = Enum.TextXAlignment.Right
-
-                Detector.Name = "Detector"
-                Detector.Parent = Slider
-                Detector.BackgroundColor3 = RGB(255, 255, 255)
-                Detector.BackgroundTransparency = 1.000
-                Detector.Position = u2(0, 10, 0.666999996, 0)
-                Detector.Size = u2(1, -20, 0, 8)
-                Detector.Image = ""
-                Detector.ImageTransparency = 1.000
-
-                Bar.Name = "Bar"
-                Bar.Parent = Detector
-                Bar.BackgroundColor3 = _G["Theme"]["Slider_Bar"]
-                Bar.BorderSizePixel = 0
-                Bar.Position = u2(0, 0, 0.5, -1)
-                Bar.Size = u2(1, 0, 0, 2)
-
-                Bob.Name = "Bob"
-                Bob.Parent = Detector
-                Bob.BackgroundColor3 = _G["Theme"]["Slider_Bob"]
-                Bob.BorderSizePixel = 0
-                Bob.Position = u2(0, 0, 0.5, -1)
-                Bob.Size = u2(0, 2, 0, 4)
-
-                Section.Size = u2(1, 0, 0, SectionListLayout.AbsoluteContentSize.Y)
-
-                local Dragging = false
-                Detector.MouseButton1Down:Connect(function()
-                    Dragging = true
-                end)
-                local connection
-                connection = UIS.InputEnded:Connect(function(input)
-                    if DESTROY_GUI then
-                        connection:Disconnect()
-                    end
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        Dragging = false
-                    end
-                end)
-
-                local function Place(val)
-                    local size = Bob.AbsoluteSize
-                    local difference = info.max - info.min
-                    local factor = abs(clamp(val, info.min, info.max) + abs(info.min)) / difference
-                    Bob.Position = u2(0, clamp(factor * (Bar.AbsoluteSize.X - size.X), 0, Bar.AbsoluteSize.X - size.X), 0.5, -size.Y/2)
-                end
-                Place(info.value)
-
-                local previous = nil
-                local c 
-                c = game:service("RunService").RenderStepped:Connect(function()
-                    if DESTROY_GUI then
-                        c:Disconnect()
-                    end
-                    if Dragging then
-                        -- PLACE BOB
-                        local size = Bob.AbsoluteSize
-                        local pos = Bob.AbsolutePosition
-                        local offset = pos.X - Bar.AbsolutePosition.X
-                        local mouseoffset = Mouse.X - pos.X
-                        Bob.Position = u2(0, clamp(offset + mouseoffset, 0, Bar.AbsoluteSize.X - size.X), 0.5, -size.Y/2)
-                        
-                        -- CALCULATIONS
-                        local difference = info.max - info.min
-                        local distance = Bob.AbsolutePosition.X - Bar.AbsolutePosition.X
-                        local outcome = nil
-                        outcome = round(info.min + distance * difference / (Bar.AbsoluteSize.X - size.X))
-                        if decimals > 1 then
-                            local str = "1"
-                            for i = 1, decimals do 
-                                str = str.."0"
-                            end
-                            outcome = floor((info.min + distance * difference / (Bar.AbsoluteSize.X - size.X)) * tonumber(str))/tonumber(str)
+                        colorpicker_c:Disconnect()
+                    else
+                        if SelectingHUE then
+                            Indicator.Position = u2(0, 0, 0, clamp(Mouse.Y - HUEPicker.AbsolutePosition.Y, 0, HUEPicker.AbsoluteSize.Y))
+                            local h1 = (HUEPicker.AbsoluteSize.Y - (Indicator.AbsolutePosition.Y - HUEPicker.AbsolutePosition.Y)) / HUEPicker.AbsoluteSize.Y
+                            local s1 = (Cursor.AbsolutePosition.X - HSVBox.AbsolutePosition.X) / HSVBox.AbsoluteSize.X
+                            local v1 = (HSVBox.AbsoluteSize.Y - (Cursor.AbsolutePosition.Y - HSVBox.AbsolutePosition.Y)) / HSVBox.AbsoluteSize.Y
+                            PlaceColorHSV({h = h1, s = s1, v = v1})
                         end
-                        Value.Text = tostring(outcome)..tostring(info.suffix)
-                        if outcome ~= previous then
-                            previous = outcome
-                            CallBack(outcome)
+                        if SelectingHSV then
+                            Cursor.Position = u2(0, clamp(Mouse.X - HSVBox.AbsolutePosition.X, 0, HSVBox.AbsoluteSize.X), 0, clamp(Mouse.Y - HSVBox.AbsolutePosition.Y, 0, HSVBox.AbsoluteSize.Y))
+                            local h1 = (HUEPicker.AbsoluteSize.Y - (Indicator.AbsolutePosition.Y - HUEPicker.AbsolutePosition.Y)) / HUEPicker.AbsoluteSize.Y
+                            local s1 = (Cursor.AbsolutePosition.X - HSVBox.AbsolutePosition.X) / HSVBox.AbsoluteSize.X
+                            local v1 = (HSVBox.AbsoluteSize.Y - (Cursor.AbsolutePosition.Y - HSVBox.AbsolutePosition.Y)) / HSVBox.AbsoluteSize.Y
+                            Cursor.Position = u2(0, clamp(Mouse.X - HSVBox.AbsolutePosition.X, Cursor.AbsoluteSize.X/2, HSVBox.AbsoluteSize.X - Cursor.AbsoluteSize.X), 0, clamp(Mouse.Y - HSVBox.AbsolutePosition.Y, Cursor.AbsoluteSize.Y/2, HSVBox.AbsoluteSize.Y - Cursor.AbsoluteSize.Y))
+                            PlaceColorHSV({h = h1, s = s1, v = v1})
                         end
                     end
-                end)
-            end
-            function function_library:NewKeybind(name, CallBack, info)
-                local current_bind = info.keybind or ""
-
-                local Keybind = new("Frame")
-                local KeybindName = new("TextLabel")
-                local Detector = new("TextButton")
-
-                Keybind.Name = "Keybind"
-                Keybind.Parent = Section
-                Keybind.BackgroundColor3 = RGB(255, 255, 255)
-                Keybind.BackgroundTransparency = 1.000
-                Keybind.BorderSizePixel = 0
-                Keybind.Position = u2(0, 0, 0.134468913, 0)
-                Keybind.Size = u2(1, 0, 0, 30)
-
-                KeybindName.Name = "KeybindName"
-                KeybindName.Parent = Keybind
-                KeybindName.BackgroundColor3 = RGB(255, 255, 255)
-                KeybindName.BackgroundTransparency = 1.000
-                KeybindName.Position = u2(0, 10, 0, 0)
-                KeybindName.Size = u2(0, 2, 1, 0)
-                KeybindName.Font = Enum.Font.SourceSans
-                KeybindName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                KeybindName.Text = name
-                KeybindName.TextSize = 15.000
-                KeybindName.TextXAlignment = Enum.TextXAlignment.Left
-
-                Detector.Name = "Detector"
-                Detector.Parent = Keybind
-                Detector.BackgroundColor3 = RGB(29, 29, 29)
-                Detector.BorderColor3 = _G["Theme"]["Keybind_Border"]
-                Detector.Position = u2(1, -110, 0.5, -10)
-                Detector.Size = u2(0, 100, 0, 20)
-                Detector.AutoButtonColor = false
-                Detector.Font = Enum.Font.SourceSans
-                Detector.Text = stringsub(tostring(current_bind), 14, #tostring(current_bind))
-                Detector.TextColor3 = RGB(255, 255, 255)
-                Detector.TextSize = 14.000
-
-                Section.Size = u2(1, 0, 0, SectionListLayout.AbsoluteContentSize.Y)
-
-                Detector.MouseEnter:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.3}):Play()
-                end)
-            
-                Detector.MouseLeave:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-                end)
-
-                local Selecting = false
-
-                local function Scale(word)
-                    local scale = #word * 100 / 12
-                    Detector.Size = u2(0, scale, 0, 20)
-                    Detector.Position = u2(1, -scale - 10, 0.5, -10)
                 end
-                Scale(stringsub(tostring(current_bind), 14, #tostring(current_bind)))
 
                 Detector.MouseButton1Click:Connect(function()
-                    Selecting = true
-                    Detector.Text = ""
-                    Scale("[]")
-                    local connection
-                    local connection2
-                    connection = UIS.InputBegan:Connect(function(input)
-                        if DESTROY_GUI then
-                            connection:Disconnect()
-                        end
-                        if input.UserInputType == Enum.UserInputType.Keyboard then
-                            -- Click:Play()
-                            current_bind = input.KeyCode
-                            Detector.Text = stringsub(tostring(current_bind), 14, #tostring(current_bind))
-                            Scale("["..stringsub(tostring(current_bind), 14, #tostring(current_bind)).."]")
-                            connection:Disconnect()
-                            connection2:Disconnect()
-                            wait()
-                            Selecting = false
-                        end
-                    end)
-                    connection2 = UIS.InputBegan:Connect(function(input)
-                        if DESTROY_GUI then
-                            connection2:Disconnect()
-                        end
-                        if input.UserInputType == Enum.UserInputType.MouseButton2 then
-                            Detector.Text = "NONE"
-                            Scale("[NONE]")
-                            current_bind = nil
-                            connection:Disconnect()
-                            connection2:Disconnect()
-                            wait()
-                            Selecting = false
-                        end
-                    end)
+                    PickerFrame.Visible = not PickerFrame.Visible
+
+                    if PickerFrame.Visible then
+                        RS:BindToRenderStep("CPBinding", 1, colorpicker_c)
+                    else
+                        RS:UnbindFromRenderStep("CPBinding")
+                    end
                 end)
 
-                local c
-                c = UIS.InputBegan:Connect(function(input)
+                local detect_inside
+                detect_inside = UIS.InputBegan:Connect(function(input, gameProcessed)
                     if DESTROY_GUI then
-                        c:Disconnect()
-                    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == current_bind and Selecting == false then
-                        CallBack(tostring(current_bind))
+                        detect_inside:Disconnect()
+                    elseif not gameProcessed then
+                        if input.UserInputType == Enum.UserInputType.MouseButton2 and PickerFrame.Visible == true and MouseIn(PickerFrame) == false then
+                            PickerFrame.Visible = false
+                            RS:UnbindFromRenderStep("CPBinding")
+                        elseif input.UserInputType == Enum.UserInputType.MouseButton1 and PickerFrame.Visible == true and MouseIn(Detector) == false and MouseIn(PickerFrame) == false then
+                            PickerFrame.Visible = false
+                            RS:UnbindFromRenderStep("CPBinding")
+                        end
                     end
                 end)
 
-                local keybind_function_library = {}
-                function keybind_function_library:UpdateKeybind(newbind)
-                    current_bind = newbind
-                    Detector.Text = stringsub(tostring(current_bind), 14, #tostring(current_bind))
-                    Scale("["..stringsub(tostring(current_bind), 14, #tostring(current_bind)).."]")
+                local color_picker_funcs = {}
+
+                color_picker_funcs.SetColor = function(newcol)
+                    PlaceColor(newcol)
                 end
 
-                function keybind_function_library:Fire(times)
-                    local n = times or 1
-                    for i = 1, n do
-                        CallBack()
-                    end
-                end
-
-                return keybind_function_library
+                return color_picker_funcs
             end
-            function function_library:NewDropdown(name, CallBack, info)
-                local current_option = info.options[info.default] or info.options[1]
-                local Dropdown = new("Frame")
-                local DropdownName = new("TextLabel")
-                local Detector = new("TextButton")
-                local Arrow = new("ImageLabel")
-                local OptionsList = new("Frame")
-                local OptionsLayout = new("UIListLayout")
 
-                Dropdown.Name = "Dropdown"
-                Dropdown.Parent = Section
+            cat_funcs.NewDropdown = function(dropdown_name, CallBack, info)
+                if CallBack ~= nil and info ~= nil then else return end
+
+                local current_option = info.options[info.default] or info.options[1]
+
+                local Dropdown = new("Frame")
+                local Dropdown_Title = new("TextLabel")
+                local Detector = new("TextButton")
+                local Dropdown_Arrow = new("ImageLabel")
+                local Options_Container = new("Frame")
+                local Dropdown_List_Layout = new("UIListLayout")
+              
+                Dropdown.Name = dropdown_name
+                Dropdown.Parent = Options_Holder
                 Dropdown.BackgroundColor3 = RGB(255, 255, 255)
                 Dropdown.BackgroundTransparency = 1.000
-                Dropdown.BorderSizePixel = 0
-                Dropdown.Position = u2(0, 0, 1.5, 0)
-                Dropdown.Size = u2(1, 0, 0, 55)
+                Dropdown.Size = u2(1, 0, 0, 25)
+                Dropdown.ZIndex = 4
 
-                DropdownName.Name = "DropdownName"
-                DropdownName.Parent = Dropdown
-                DropdownName.BackgroundColor3 = RGB(255, 255, 255)
-                DropdownName.BackgroundTransparency = 1.000
-                DropdownName.Position = u2(0, 11, 0, 0)
-                DropdownName.Size = u2(0, 2, 0, 30)
-                DropdownName.Font = Enum.Font.SourceSans
-                DropdownName.TextColor3 = _G["Theme"]["Item_Name_Color"]
-                DropdownName.Text = name
-                DropdownName.TextSize = 15.000
-                DropdownName.TextXAlignment = Enum.TextXAlignment.Left
+                Dropdown_Title.Name = "Dropdown_Title"
+                Dropdown_Title.Parent = Dropdown
+                Dropdown_Title.BackgroundColor3 = RGB(255, 255, 255)
+                Dropdown_Title.BackgroundTransparency = 1.000
+                Dropdown_Title.Position = u2(0, 10, 0, 0)
+                Dropdown_Title.Size = u2(0, 1, 1, 0)
+                Dropdown_Title.ZIndex = 5
+                Dropdown_Title.Font = Enum.Font.SourceSans
+                Dropdown_Title.Text = dropdown_name
+                Dropdown_Title.TextColor3 = RGB(238, 238, 255)
+                Dropdown_Title.TextSize = 14.000
+                Dropdown_Title.TextXAlignment = Enum.TextXAlignment.Left
 
                 Detector.Name = "Detector"
                 Detector.Parent = Dropdown
-                Detector.BackgroundColor3 = RGB(29, 29, 29)
-                Detector.BorderColor3 = _G["Theme"]["Dropdown_Border"]
-                Detector.Position = u2(0, 10, 0, 30)
-                Detector.Size = u2(1, -20, 0, 20)
-                Detector.ZIndex = 2
-                
-                NewDropdownLayer()
+                Detector.BackgroundColor3 = RGB(25, 26, 36)
+                Detector.BorderColor3 = RGB(58, 58, 85)
+                Detector.Position = u2(1, -110, 0.5, -10)
+                Detector.Size = u2(0, 100, 0, 20)
+                Detector.ZIndex = 5
                 Detector.AutoButtonColor = false
                 Detector.Font = Enum.Font.SourceSans
+                Detector.Text = current_option
                 Detector.TextColor3 = RGB(255, 255, 255)
-                Detector.ZIndex = 2
-                Detector.TextSize = 14.000
-                Detector.TextColor3 = _G["Theme"]["Dropdown_Main_Option"]
-                Detector.TextWrapped = true
+                Detector.TextSize = 13.000
 
-                Arrow.Name = "Arrow"
-                Arrow.Parent = Detector
-                Arrow.BackgroundColor3 = RGB(255, 255, 255)
-                Arrow.BackgroundTransparency = 1.000
-                Arrow.BorderSizePixel = 0
-                Arrow.Position = u2(1, -20, 0.5, -2)
-                Arrow.Size = u2(0, 10, 0, 6)
-                Arrow.ZIndex = 3
-                Arrow.Image = "rbxassetid://6820979846"
-                Arrow.ImageColor3 = _G["Theme"]["Dropdown_Arrow"]
+                Dropdown_Arrow.Name = "Dropdown_Arrow"
+                Dropdown_Arrow.Parent = Detector
+                Dropdown_Arrow.BackgroundColor3 = RGB(255, 255, 255)
+                Dropdown_Arrow.BackgroundTransparency = 1.000
+                Dropdown_Arrow.Position = u2(1, -15, 0.5, -2)
+                Dropdown_Arrow.Size = u2(0, 10, 0, 6)
+                Dropdown_Arrow.ZIndex = 5
+                Dropdown_Arrow.Image = "rbxassetid://6820979846"
+                Dropdown_Arrow.ImageColor3 = RGB(238, 238, 255)
 
-                Section.Size = u2(1, 0, 0, SectionListLayout.AbsoluteContentSize.Y)
+                Options_Container.Name = "Options_Container"
+                Options_Container.Parent = Detector
+                Options_Container.BackgroundColor3 = RGB(255, 255, 255)
+                Options_Container.BackgroundTransparency = 1.000
+                Options_Container.Position = u2(0, 0, 1, 1)
+                Options_Container.Size = u2(1, 0, 1, 0)
+                Options_Container.Visible = false
+                Options_Container.ZIndex = 15
 
-                OptionsList.Name = "OptionsList"
-                OptionsList.Parent = Dropdown
-                OptionsList.BackgroundColor3 = RGB(28, 28, 28)
-                OptionsList.BackgroundTransparency = 1.000
-                OptionsList.BorderColor3 = RGB(25, 25, 25)
-                OptionsList.Position = u2(0, 10, 0, 52)
-                OptionsList.Size = u2(1, -20, 0, 20)
-                OptionsList.ZIndex = dropdownzindex
-                OptionsList.Visible = false
-
-                OptionsLayout.Name = "OptionsLayout"
-                OptionsLayout.Parent = OptionsList
-                OptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                OptionsLayout.Padding = UDim.new(0, 1)
-                
-                local function Select(option)
-                    CallBack(option)
-                    OptionsList.Visible = false
-                    Detector.Text = option
-                end
-                Select(current_option)
+                Dropdown_List_Layout.Name = "Dropdown_List_Layout"
+                Dropdown_List_Layout.Parent = Options_Container
+                Dropdown_List_Layout.SortOrder = Enum.SortOrder.LayoutOrder
 
                 Detector.MouseEnter:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.3}):Play()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(20, 21, 31)}):Play()
                 end)
             
                 Detector.MouseLeave:Connect(function()
-                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
                 end)
 
                 Detector.MouseButton1Click:Connect(function()
-                    -- Click:Play()
-                    OptionsList.Visible = not OptionsList.Visible
+                    Options_Container.Visible = not Options_Container.Visible
+                    if Options_Container.Visible then
+                        Dropdown_Arrow.Rotation = 90
+                    else
+                        Dropdown_Arrow.Rotation = 0
+                    end
                 end)
 
+                local detect_inside_dropdown
+                detect_inside_dropdown = UIS.InputBegan:Connect(function(input, gameProcessed)
+                    if DESTROY_GUI then
+                        detect_inside_dropdown:Disconnect()
+                    elseif not gameProcessed and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2) and Options_Container.Visible and MouseIn(Detector) == false and MouseIn(Options_Container) == false then
+                        local inside_selector = true
+                        local d_table = Options_Container:GetChildren()
+                        for i = 1, #d_table do
+                            local v = d_table[i]
+                            if not v:IsA("UIListLayout") then
+                                if MouseIn(v) then
+                                    inside_selector = true
+                                    break
+                                else
+                                    inside_selector = false
+                                end
+                            end
+                        end  
+                        if inside_selector == false then
+                            Options_Container.Visible = false
+                            Dropdown_Arrow.Rotation = 0
+                        end
+                    end
+                end)
+
+                local function Select(option)
+                    CallBack(option)
+                    Options_Container.Visible = false
+                    Dropdown_Arrow.Rotation = 0
+                    Detector.Text = option
+                end
+                Options_Container.Visible = false
+                Dropdown_Arrow.Rotation = 0
+                Detector.Text = current_option
+
                 local function ReMap()
-                    for _,v in pairs(OptionsList:GetChildren()) do
+                    for _,v in pairs(Options_Container:GetChildren()) do
                         if not v:IsA("UIListLayout") then
                             for u,x in pairs(getconnections(v.MouseEnter)) do
                                 x:Disable()
@@ -1215,24 +1602,25 @@ function Library:NewWindow()
                     end
                     for _,v in pairs(info.options) do
                         local Option = new("TextButton")
+
                         Option.Name = "Option"
-                        Option.Parent = OptionsList
-                        Option.BackgroundColor3 = RGB(29, 29, 29)
-                        Option.BorderColor3 = RGB(25, 25, 25)
+                        Option.Parent = Options_Container
+                        Option.BackgroundColor3 = RGB(25, 26, 36)
+                        Option.BorderColor3 = RGB(58, 58, 85)
                         Option.Size = u2(1, 0, 0, 20)
+                        Option.ZIndex = 16
                         Option.AutoButtonColor = false
                         Option.Font = Enum.Font.SourceSans
                         Option.Text = v
-                        Option.ZIndex = dropdownzindex-1
-                        Option.TextColor3 = _G["Theme"]["Dropdown_Options"]
+                        Option.TextColor3 = RGB(238, 238, 255)
                         Option.TextSize = 13.000
     
                         Option.MouseEnter:Connect(function()
-                            TS:Create(Option, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(26, 26, 26)}):Play()
+                            TS:Create(Option, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(20, 21, 31)}):Play()
                         end)
-        
+                    
                         Option.MouseLeave:Connect(function()
-                            TS:Create(Option, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(29, 29, 29)}):Play()
+                            TS:Create(Option, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
                         end)
     
                         Option.MouseButton1Click:Connect(function()
@@ -1241,37 +1629,263 @@ function Library:NewWindow()
                     end
                 end
                 ReMap()
-                NewDropdownLayer()
-                
-                local dropdown_functions_library = {}
-                function dropdown_functions_library:SelectOption(name)
+
+                local dropdown_funcs = {}
+
+                dropdown_funcs.SelectOption = function(op_name)
                     for _,v in pairs(info.options) do
-                        if tostring(v) == tostring(name) then
+                        if tostring(v) == tostring(op_name) then
                             Select(v)
+                            break
                         end
                     end
                 end
-                function dropdown_functions_library:AddOption(name)
-                    table.insert(info.options, name)
+
+                dropdown_funcs.AddOption = function(op_name)
+                    inst(info.options, op_name)
                     ReMap()
                 end
-                function dropdown_functions_library:RemoveOption(name)
+
+                dropdown_funcs.RemoveOption = function(op_name)
                     local newtbl = {}
                     for _,v in pairs(info.options) do
-                        if tostring(v) ~= tostring(name) then
-                            table.insert(newtbl, v)
+                        if tostring(v) ~= tostring(op_name) then
+                            inst(newtbl, v)
                         end
                     end
                     info.options = newtbl
                     ReMap()
                 end
-                return dropdown_functions_library
+
+                return dropdown_funcs
             end
-            return function_library
+
+            cat_funcs.NewPlayerChipset = function(chip_set_name, CallBack)
+                if CallBack ~= nil then else return end
+
+                local Dropdown = new("Frame")
+                local Dropdown_Title = new("TextLabel")
+                local Detector = new("TextButton")
+                local Dropdown_Arrow = new("ImageLabel")
+                local Options_Container = new("Frame")
+                local Dropdown_List_Layout = new("UIListLayout")
+              
+                Dropdown.Name = chip_set_name
+                Dropdown.Parent = Options_Holder
+                Dropdown.BackgroundColor3 = RGB(255, 255, 255)
+                Dropdown.BackgroundTransparency = 1.000
+                Dropdown.Size = u2(1, 0, 0, 25)
+                Dropdown.ZIndex = 4
+
+                Dropdown_Title.Name = "Dropdown_Title"
+                Dropdown_Title.Parent = Dropdown
+                Dropdown_Title.BackgroundColor3 = RGB(255, 255, 255)
+                Dropdown_Title.BackgroundTransparency = 1.000
+                Dropdown_Title.Position = u2(0, 10, 0, 0)
+                Dropdown_Title.Size = u2(0, 1, 1, 0)
+                Dropdown_Title.ZIndex = 5
+                Dropdown_Title.Font = Enum.Font.SourceSans
+                Dropdown_Title.Text = chip_set_name
+                Dropdown_Title.TextColor3 = RGB(238, 238, 255)
+                Dropdown_Title.TextSize = 14.000
+                Dropdown_Title.TextXAlignment = Enum.TextXAlignment.Left
+
+                Detector.Name = "Detector"
+                Detector.Parent = Dropdown
+                Detector.BackgroundColor3 = RGB(25, 26, 36)
+                Detector.BorderColor3 = RGB(58, 58, 85)
+                Detector.Position = u2(1, -110, 0.5, -10)
+                Detector.Size = u2(0, 100, 0, 20)
+                Detector.ZIndex = 5
+                Detector.AutoButtonColor = false
+                Detector.Font = Enum.Font.SourceSans
+                Detector.Text = "Players"
+                Detector.TextColor3 = RGB(255, 255, 255)
+                Detector.TextSize = 13.000
+
+                Dropdown_Arrow.Name = "Dropdown_Arrow"
+                Dropdown_Arrow.Parent = Detector
+                Dropdown_Arrow.BackgroundColor3 = RGB(255, 255, 255)
+                Dropdown_Arrow.BackgroundTransparency = 1.000
+                Dropdown_Arrow.Position = u2(1, -15, 0.5, -2)
+                Dropdown_Arrow.Size = u2(0, 10, 0, 6)
+                Dropdown_Arrow.ZIndex = 5
+                Dropdown_Arrow.Image = "rbxassetid://6820979846"
+                Dropdown_Arrow.ImageColor3 = RGB(238, 238, 255)
+
+                Options_Container.Name = "Options_Container"
+                Options_Container.Parent = Detector
+                Options_Container.BackgroundColor3 = RGB(255, 255, 255)
+                Options_Container.BackgroundTransparency = 1.000
+                Options_Container.Position = u2(0, 0, 1, 1)
+                Options_Container.Size = u2(1, 0, 1, 0)
+                Options_Container.Visible = false
+                Options_Container.ZIndex = 15
+
+                Dropdown_List_Layout.Name = "Dropdown_List_Layout"
+                Dropdown_List_Layout.Parent = Options_Container
+                Dropdown_List_Layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+                Options_Container.Visible = false
+                Dropdown_Arrow.Rotation = 0
+
+                Detector.MouseEnter:Connect(function()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(20, 21, 31)}):Play()
+                end)
+            
+                Detector.MouseLeave:Connect(function()
+                    TS:Create(Detector, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
+                end)
+
+                Detector.MouseButton1Click:Connect(function()
+                    Options_Container.Visible = not Options_Container.Visible
+                    if Options_Container.Visible then
+                        Dropdown_Arrow.Rotation = 90
+                    else
+                        Dropdown_Arrow.Rotation = 0
+                    end
+                end)
+
+                local detect_inside_dropdown
+                detect_inside_dropdown = UIS.InputBegan:Connect(function(input, gameProcessed)
+                    if DESTROY_GUI then
+                        detect_inside_dropdown:Disconnect()
+                    elseif not gameProcessed and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2) and Options_Container.Visible and MouseIn(Detector) == false and MouseIn(Options_Container) == false then
+                        local inside_selector = true
+                        local d_table = Options_Container:GetChildren()
+                        for i = 1, #d_table do
+                            local v = d_table[i]
+                            if not v:IsA("UIListLayout") then
+                                if MouseIn(v) then
+                                    inside_selector = true
+                                    break
+                                else
+                                    inside_selector = false
+                                end
+                            end
+                        end  
+                        if inside_selector == false then
+                            Options_Container.Visible = false
+                            Dropdown_Arrow.Rotation = 0
+                        end
+                    end
+                end)
+
+                local player_table = {}
+
+                local max = 0
+                for i,v in pairs(Players:GetPlayers()) do
+                    if v.Name ~= Player.Name then
+                        local Option = new("TextButton")
+                        local player_name = v.Name
+
+                        Option.Name = "Option"
+                        Option.Parent = Options_Container
+                        Option.BackgroundColor3 = RGB(25, 26, 36)
+                        Option.BorderColor3 = RGB(58, 58, 85)
+                        Option.Size = u2(1, 0, 0, 20)
+                        Option.ZIndex = 16
+                        Option.AutoButtonColor = false
+                        Option.Font = Enum.Font.SourceSans
+                        Option.Text = player_name
+                        Option.TextColor3 = RGB(238, 238, 255)
+                        Option.TextSize = 13.000
+
+                        player_table[player_name] = false
+                        local current = false
+
+                        local function Toggle(bool)
+                            current = bool
+                            player_table[player_name] = current
+                            CallBack(player_table)
+                            if bool then
+                                TS:Create(Option, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(66, 107, 58)}):Play()
+                            else
+                                TS:Create(Option, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
+                            end
+                        end
+
+                        Option.MouseButton1Click:Connect(function()
+                            current = not current
+                            Toggle(current)
+                        end)
+
+                        if Option.TextBounds.X > max then
+                            max = Option.TextBounds.X
+
+                            Detector.Size = u2(0, max + 20, 0, 20)
+                            Detector.Position = u2(1, -Detector.AbsoluteSize.X-10, 0.5, -10)
+                        end
+
+                        local c_changed
+                        c_changed = v.AncestryChanged:connect(function()
+                            if not v:IsDescendantOf(game) then
+                                Option:Destroy()
+                            end
+                        end)
+                    end
+                end
+
+                local c_added
+                c_added = Players.PlayerAdded:Connect(function(v) 
+                    if DESTROY_GUI then
+                        c_added:Disconnect()
+                    elseif v.Name ~= Player.Name then
+                        local Option = new("TextButton")
+                        local player_name = v.Name
+
+                        Option.Name = "Option"
+                        Option.Parent = Options_Container
+                        Option.BackgroundColor3 = RGB(25, 26, 36)
+                        Option.BorderColor3 = RGB(58, 58, 85)
+                        Option.Size = u2(1, 0, 0, 20)
+                        Option.ZIndex = 16
+                        Option.AutoButtonColor = false
+                        Option.Font = Enum.Font.SourceSans
+                        Option.Text = player_name
+                        Option.TextColor3 = RGB(238, 238, 255)
+                        Option.TextSize = 13.000
+
+                        player_table[player_name] = false
+                        local current = false
+
+                        local function Toggle(bool)
+                            current = bool
+                            player_table[player_name] = current
+                            CallBack(player_table)
+                            if bool then
+                                TS:Create(Option, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(66, 107, 58)}):Play()
+                            else
+                                TS:Create(Option, tween(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundColor3 = RGB(25, 26, 36)}):Play()
+                            end
+                        end
+
+                        Option.MouseButton1Click:Connect(function()
+                            current = not current
+                            Toggle(current)
+                        end)
+
+                        if Option.TextBounds.X > max then
+                            max = Option.TextBounds.X
+
+                            Detector.Size = u2(0, max + 20, 0, 20)
+                            Detector.Position = u2(1, -Detector.AbsoluteSize.X-10, 0.5, -10)
+                        end
+
+                        local c_changed
+                        c_changed = v.AncestryChanged:connect(function()
+                            if not v:IsDescendantOf(game) then
+                                Option:Destroy()
+                            end
+                        end)
+                    end
+                end)
+
+            end
+            return cat_funcs
         end
-        return section_lib
+        return page_funcs
     end
     return structurer
 end
-
 return Library
