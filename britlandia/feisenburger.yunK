@@ -1,1 +1,6 @@
-
+local status = {
+  enabled = true;
+  anti_feisenburger = true;
+  information = {}
+}
+return status
