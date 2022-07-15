@@ -2,7 +2,7 @@
     Sirius ESP Library
 
     - siper#9938: ESP
-    - spoorloos/mickey.#5612: Bounding box/Out of view arrows
+    - spoorloos/mickey.#5612: Bounding box/Out of view arrows LOVE YOU SPOOORLOOOSOSSSSSOSOSOSO
     - iRay#1488: Chams
 ]]
 
@@ -308,7 +308,7 @@ function EspLibrary.Init()
 
                 local pointA, pointB, pointC = arrowPosition, screenCenter + arrowDirection * (arrowRadius - arrowSize) + rightVector * arrowSize, screenCenter + arrowDirection * (arrowRadius - arrowSize) + -rightVector * arrowSize
 
-                local health, maxHealth = EspLibrary.GetHealth(player, character)
+                local health, maxHealth = floor(EspLibrary.GetHealth(player, character))
                 local healthBarSize = round(vector2New(EspLibrary.options.healthBarsSize, -(size.Y * (health / maxHealth))))
                 local healthBarPosition = round(vector2New(position.X - (3 + healthBarSize.X), position.Y + size.Y))
 
