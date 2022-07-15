@@ -1,9 +1,9 @@
 --[[
-    Sirius ESP Library
+    Sirius ESP Library / Fixed & Optimized
 
     - siper#9938: ESP
     - spoorloos/mickey.#5612: Bounding box/Out of view arrows
-    - iRay#1488: Chams
+    - xiba#5806: Optimizing
 ]]
 
 -- Module
@@ -313,113 +313,207 @@ function EspLibrary.Init()
                 local healthBarPosition = round(vector2New(position.X - (3 + healthBarSize.X), position.Y + size.Y))
 
                 local origin = EspLibrary.options.tracerOrigin
-
-                if EspLibrary.options.chams then
-                    if findFirstChild(torso, "BoxHandleAdornment") then
-                        for _, part in next, character:GetChildren() do
-                            if part ~= torso and findFirstChild(part, "BoxHandleAdornment") then
-                                part.BoxHandleAdornment.Visible = true
-                                part.BoxHandleAdornment.Color3 = EspLibrary.options.chamsColor
-                                part.BoxHandleAdornment.Transparency = part == torso and 1 or EspLibrary.options.chamsTransparency
-                            end
-                        end
-                    else
-                        for _, part in next, character:GetChildren() do
-                            if part == torso or string.find(part.ClassName, "Part") then
-                                local adornment = Instance.new("BoxHandleAdornment")
-                                adornment.AlwaysOnTop = true
-                                adornment.Size = part.Size
-                                adornment.Transparency = 1
-                                adornment.Adornee = part
-                                adornment.ZIndex = 1
-                                adornment.Parent = part
-                            end
-                        end
-                    end
-                elseif not EspLibrary.options.chams and findFirstChild(torso, "BoxHandleAdornment") and torso.BoxHandleAdornment.Visible then
-                    for _, part in next, character:GetChildren() do
-                        if findFirstChild(part, "BoxHandleAdornment") then
-                            part.BoxHandleAdornment.Visible = false
-                        end
+                if EspLibrary.options.outOfViewArrows then
+                    objects.arrow = objects.arrow or create("Triangle", {
+                        Thickness = 1,
+                    })
+                    objects.arrow.Visible = not canShow and EspLibrary.options.outOfViewArrows
+                    objects.arrow.Filled = EspLibrary.options.outOfViewArrowsFilled
+                    objects.arrow.Transparency = EspLibrary.options.outOfViewArrowsTransparency
+                    objects.arrow.Color = color or EspLibrary.options.outOfViewArrowsColor
+                    objects.arrow.PointA = pointA
+                    objects.arrow.PointB = pointB
+                    objects.arrow.PointC = pointC
+                    
+                else
+                    if objects.arrow then
+                        objects.arrow:Remove()
+                        objects.arrow = nil
                     end
                 end
 
-                objects.arrow.Visible = not canShow and EspLibrary.options.outOfViewArrows
-                objects.arrow.Filled = EspLibrary.options.outOfViewArrowsFilled
-                objects.arrow.Transparency = EspLibrary.options.outOfViewArrowsTransparency
-                objects.arrow.Color = color or EspLibrary.options.outOfViewArrowsColor
-                objects.arrow.PointA = pointA
-                objects.arrow.PointB = pointB
-                objects.arrow.PointC = pointC
+                if EspLibrary.options.arrowOutline then
+                    objects.arrowOutline = objects.arrowOutline or create("Triangle", {
+                        Thickness = 1,
+                    })
+                    objects.arrowOutline.Visible = not canShow and EspLibrary.options.outOfViewArrowsOutline
+                    objects.arrowOutline.Filled = EspLibrary.options.outOfViewArrowsOutlineFilled
+                    objects.arrowOutline.Transparency = EspLibrary.options.outOfViewArrowsOutlineTransparency
+                    objects.arrowOutline.Color = color or EspLibrary.options.outOfViewArrowsOutlineColor
+                    objects.arrowOutline.PointA = pointA
+                    objects.arrowOutline.PointB = pointB
+                    objects.arrowOutline.PointC = pointC
+                    
+                else
+                    if objects.arrowOutline then
+                        objects.arrowOutline:Remove()
+                        objects.arrowOutline = nil
+                    end
+                end
 
-                objects.arrowOutline.Visible = not canShow and EspLibrary.options.outOfViewArrowsOutline
-                objects.arrowOutline.Filled = EspLibrary.options.outOfViewArrowsOutlineFilled
-                objects.arrowOutline.Transparency = EspLibrary.options.outOfViewArrowsOutlineTransparency
-                objects.arrowOutline.Color = color or EspLibrary.options.outOfViewArrowsOutlineColor
-                objects.arrowOutline.PointA = pointA
-                objects.arrowOutline.PointB = pointB
-                objects.arrowOutline.PointC = pointC
+                if EspLibrary.options.names then
+                    objects.top = objects.top or create("Text", {
+                        Center = true,
+                        Size = 13,
+                        Outline = true,
+                        OutlineColor = color3New(),
+                        Font = 2,
+                    })
+                    objects.top.Visible = canShow and EspLibrary.options.names
+                    objects.top.Font = EspLibrary.options.font
+                    objects.top.Size = EspLibrary.options.fontSize
+                    objects.top.Transparency = EspLibrary.options.nameTransparency
+                    objects.top.Color = color or EspLibrary.options.nameColor
+                    objects.top.Text = player.Name
+                    objects.top.Position = round(position + vector2New(size.X * 0.5, -(objects.top.TextBounds.Y + 2)))
+                    
+                else
+                    if objects.top then
+                        objects.top:Remove()
+                        objects.top = nil
+                    end
+                end
+                
+                if EspLibrary.options.healthText then
+                    objects.side = objects.side or create("Text", {
+                        Size = 13,
+                        Outline = true,
+                        OutlineColor = color3New(),
+                        Font = 2,
+                    })
+                    objects.side.Visible = canShow and EspLibrary.options.healthText
+                    objects.side.Font = EspLibrary.options.font
+                    objects.side.Size = EspLibrary.options.fontSize
+                    objects.side.Transparency = EspLibrary.options.healthTextTransparency
+                    objects.side.Color = color or EspLibrary.options.healthTextColor
+                    objects.side.Text = math.floor(health) .. EspLibrary.options.healthTextSuffix
+                    objects.side.Position = round(position + vector2New(size.X + 3, -3))
+                else
+                    if objects.side then
+                        objects.side:Remove()
+                        objects.side = nil
+                    end
+                end
+                if EspLibrary.options.distance then
+                    objects.bottom = objects.bottom or create("Text", {
+                        Center = true,
+                        Size = 13,
+                        Outline = true,
+                        OutlineColor = color3New(),
+                        Font = 2,
+                    })
+                    objects.bottom.Visible = canShow and EspLibrary.options.distance
+                    objects.bottom.Font = EspLibrary.options.font
+                    objects.bottom.Size = EspLibrary.options.fontSize
+                    objects.bottom.Transparency = EspLibrary.options.distanceTransparency
+                    objects.bottom.Color = color or EspLibrary.options.nameColor
+                    objects.bottom.Text = tostring(round(distance)) .. EspLibrary.options.distanceSuffix
+                    objects.bottom.Position = round(position + vector2New(size.X * 0.5, size.Y + 1))
+                else
+                    if objects.bottom then
+                        objects.bottom:Remove()
+                        objects.bottom = nil
+                    end
+                end
+                
+                if EspLibrary.options.boxes then
+                    objects.box = objects.box or create("Square", {
+                        Thickness = 1
+                    })
+                    objects.box.Visible = canShow and EspLibrary.options.boxes
+                    objects.box.Color = color or EspLibrary.options.boxesColor
+                    objects.box.Transparency = EspLibrary.options.boxesTransparency
+                    objects.box.Size = size
+                    objects.box.Position = position
+                else
+                    if objects.box then
+                        objects.box:Remove()
+                        objects.box = nil
+                    end
+                end
 
-                objects.top.Visible = canShow and EspLibrary.options.names
-                objects.top.Font = EspLibrary.options.font
-                objects.top.Size = EspLibrary.options.fontSize
-                objects.top.Transparency = EspLibrary.options.nameTransparency
-                objects.top.Color = color or EspLibrary.options.nameColor
-                objects.top.Text = player.Name
-                objects.top.Position = round(position + vector2New(size.X * 0.5, -(objects.top.TextBounds.Y + 2)))
+                if EspLibrary.options.boxOutline then
+                    objects.boxOutline = objects.boxOutline or create("Square", {
+                        Thickness = 3,
+                        Color = color3New()
+                    })
+                    objects.boxOutline.Visible = canShow and EspLibrary.options.boxes
+                    objects.boxOutline.Transparency = EspLibrary.options.boxesTransparency
+                    objects.boxOutline.Size = size
+                    objects.boxOutline.Position = position
+                else
+                    if objects.boxOutline then
+                        objects.boxOutline:Remove()
+                        objects.boxOutline = nil
+                    end
+                end
 
-                objects.side.Visible = canShow and EspLibrary.options.healthText
-                objects.side.Font = EspLibrary.options.font
-                objects.side.Size = EspLibrary.options.fontSize
-                objects.side.Transparency = EspLibrary.options.healthTextTransparency
-                objects.side.Color = color or EspLibrary.options.healthTextColor
-                objects.side.Text = math.floor(health) .. EspLibrary.options.healthTextSuffix
-                objects.side.Position = round(position + vector2New(size.X + 3, -3))
-
-                objects.bottom.Visible = canShow and EspLibrary.options.distance
-                objects.bottom.Font = EspLibrary.options.font
-                objects.bottom.Size = EspLibrary.options.fontSize
-                objects.bottom.Transparency = EspLibrary.options.distanceTransparency
-                objects.bottom.Color = color or EspLibrary.options.nameColor
-                objects.bottom.Text = tostring(round(distance)) .. EspLibrary.options.distanceSuffix
-                objects.bottom.Position = round(position + vector2New(size.X * 0.5, size.Y + 1))
-
-                objects.box.Visible = canShow and EspLibrary.options.boxes
-                objects.box.Color = color or EspLibrary.options.boxesColor
-                objects.box.Transparency = EspLibrary.options.boxesTransparency
-                objects.box.Size = size
-                objects.box.Position = position
-
-                objects.boxOutline.Visible = canShow and EspLibrary.options.boxes
-                objects.boxOutline.Transparency = EspLibrary.options.boxesTransparency
-                objects.boxOutline.Size = size
-                objects.boxOutline.Position = position
-
-                objects.boxFill.Visible = canShow and EspLibrary.options.boxFill
-                objects.boxFill.Color = color or EspLibrary.options.boxFillColor
-                objects.boxFill.Transparency = EspLibrary.options.boxFillTransparency
-                objects.boxFill.Size = size
-                objects.boxFill.Position = position
-
-                objects.healthBar.Visible = canShow and EspLibrary.options.healthBars
-                objects.healthBar.Color = color or EspLibrary.options.healthBarsColor
-                objects.healthBar.Transparency = EspLibrary.options.healthBarsTransparency
-                objects.healthBar.Size = healthBarSize
-                objects.healthBar.Position = healthBarPosition
-
-                objects.healthBarOutline.Visible = canShow and EspLibrary.options.healthBars
-                objects.healthBarOutline.Transparency = EspLibrary.options.healthBarsTransparency
-                objects.healthBarOutline.Size = round(vector2New(healthBarSize.X, -size.Y) + vector2New(2, -2))
-                objects.healthBarOutline.Position = healthBarPosition - vector2New(1, -1)
-
-                objects.line.Visible = canShow and EspLibrary.options.tracers
-                objects.line.Color = color or EspLibrary.options.tracerColor
-                objects.line.Transparency = EspLibrary.options.tracerTransparency
-                objects.line.From =
+                if EspLibrary.options.boxFill then
+                    objects.boxFill = objects.boxFill or create("Square", {
+                        Thickness = 1,
+                        Filled = true,
+                    })
+                    objects.boxFill.Visible = canShow and EspLibrary.options.boxFill
+                    objects.boxFill.Color = color or EspLibrary.options.boxFillColor
+                    objects.boxFill.Transparency = EspLibrary.options.boxFillTransparency
+                    objects.boxFill.Size = size
+                    objects.boxFill.Position = position
+                else
+                    if objects.boxFill then
+                        objects.boxFill:Remove()
+                        objects.boxFill = nil
+                    end
+                end
+                
+                if EspLibrary.options.healthBars then
+                    objects.healthBar = objects.healthBar or create("Square", {
+                        Thickness = 1,
+                        Filled = true
+                    })
+                    objects.healthBar.Visible = canShow and EspLibrary.options.healthBars
+                    objects.healthBar.Color = color or EspLibrary.options.healthBarsColor
+                    objects.healthBar.Transparency = EspLibrary.options.healthBarsTransparency
+                    objects.healthBar.Size = healthBarSize
+                    objects.healthBar.Position = healthBarPosition
+                else
+                    if objects.healthBar then
+                        objects.healthBar:Remove()
+                        objects.healthBar = nil
+                    end
+                end
+                if EspLibrary.options.healthBars then
+                    objects.healthBarOutline = objects.healthBarOutline or create("Square", {
+                        Thickness = 1,
+                        Color = color3New(),
+                        Filled = true
+                    })
+                    objects.healthBarOutline.Visible = canShow and EspLibrary.options.healthBars
+                    objects.healthBarOutline.Transparency = EspLibrary.options.healthBarsTransparency
+                    objects.healthBarOutline.Size = round(vector2New(healthBarSize.X, -size.Y) + vector2New(2, -2))
+                    objects.healthBarOutline.Position = healthBarPosition - vector2New(1, -1)
+                else
+                    if objects.healthBarOutline then
+                        objects.healthBarOutline:Remove()
+                        objects.healthBarOutline = nil
+                    end
+                end
+                
+                if EspLibrary.options.tracers then
+                    objects.line = objects.line or create("Line")
+                    objects.line.Visible = canShow and EspLibrary.options.tracers
+                    objects.line.Color = color or EspLibrary.options.tracerColor
+                    objects.line.Transparency = EspLibrary.options.tracerTransparency
+                    objects.line.From =
                     origin == "Mouse" and userInputService:GetMouseLocation() or
                     origin == "Top" and vector2New(viewportSize.X * 0.5, 0) or
                     origin == "Bottom" and vector2New(viewportSize.X * 0.5, viewportSize.Y)
-                objects.line.To = torsoPosition
+                    objects.line.To = torsoPosition
+                else
+                    if objects.line then
+                        objects.line:Remove()
+                        objects.line = nil
+                    end
+                end
             else
                 for _, object in next, objects do
                     object.Visible = false
