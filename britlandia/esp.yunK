@@ -2,7 +2,7 @@
     Sirius ESP Library
 
     - siper#9938: ESP
-    - spoorloos/mickey.#5612: Bounding box/Out of view arrows LOVE YOU SPOOORLOOOSOSSSSSOSOSOSO
+    - spoorloos/mickey.#5612: Bounding box/Out of view arrows
     - iRay#1488: Chams
 ]]
 
@@ -308,7 +308,7 @@ function EspLibrary.Init()
 
                 local pointA, pointB, pointC = arrowPosition, screenCenter + arrowDirection * (arrowRadius - arrowSize) + rightVector * arrowSize, screenCenter + arrowDirection * (arrowRadius - arrowSize) + -rightVector * arrowSize
 
-                local health, maxHealth = floor(EspLibrary.GetHealth(player, character))
+                local health, maxHealth = EspLibrary.GetHealth(player, character)
                 local healthBarSize = round(vector2New(EspLibrary.options.healthBarsSize, -(size.Y * (health / maxHealth))))
                 local healthBarPosition = round(vector2New(position.X - (3 + healthBarSize.X), position.Y + size.Y))
 
@@ -373,7 +373,7 @@ function EspLibrary.Init()
                 objects.side.Size = EspLibrary.options.fontSize
                 objects.side.Transparency = EspLibrary.options.healthTextTransparency
                 objects.side.Color = color or EspLibrary.options.healthTextColor
-                objects.side.Text = health .. EspLibrary.options.healthTextSuffix
+                objects.side.Text = math.floor(health) .. EspLibrary.options.healthTextSuffix
                 objects.side.Position = round(position + vector2New(size.X + 3, -3))
 
                 objects.bottom.Visible = canShow and EspLibrary.options.distance
